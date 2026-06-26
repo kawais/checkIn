@@ -1,0 +1,181 @@
+{
+  "date": "2026-06-23",
+  "attendance": [
+    {
+      "studentId": "s_bc0e1b743fd1428ab7f96ccefdca6081",
+      "status": false
+    },
+    {
+      "studentId": "s_6bb0d5998cdc449b99a77b9f60bd8e4d",
+      "status": true
+    },
+    {
+      "studentId": "s_66fd92cedcf1467cb381f9a24ff4e81c",
+      "status": true
+    },
+    {
+      "studentId": "s_5a1c994362c143b3b9b3db083e6e800c",
+      "status": true
+    },
+    {
+      "studentId": "s_d952145a3f1e46afada3857a93142438",
+      "status": true
+    },
+    {
+      "studentId": "s_f8c2efa991434e3cb1f3f70705a6fc08",
+      "status": true
+    },
+    {
+      "studentId": "s_082838118777428bbeea3077d899f2ac",
+      "status": true
+    },
+    {
+      "studentId": "s_5bd01dc7cd514d0e8a9b79ebbb282dac",
+      "status": true
+    },
+    {
+      "studentId": "s_9164c01d894040e387b04725b10c55ac",
+      "status": true
+    },
+    {
+      "studentId": "s_fa85c6284fe746e1851fd7b42d3d3be6",
+      "status": false
+    },
+    {
+      "studentId": "s_6d81c5bcdf2b41d0b012e92d129bf23d",
+      "status": false
+    },
+    {
+      "studentId": "s_63c0ab5617d14cfb8f4f51db1eefea9b",
+      "status": false
+    },
+    {
+      "studentId": "s_63d49f54fa1941ecbdd2bcbb7dda00f3",
+      "status": false
+    },
+    {
+      "studentId": "s_9514f1085c534d38b17baa963c98a536",
+      "status": false
+    },
+    {
+      "studentId": "s_d5b2a13074904cec85631deb57f85ddb",
+      "status": true
+    },
+    {
+      "studentId": "s_5a6a106c09f64cf2b883c62c683642f9",
+      "status": true
+    },
+    {
+      "studentId": "s_be0d54f8a71f4e11a577a2446b4b26a6",
+      "status": true
+    },
+    {
+      "studentId": "s_13f7104a213645f0952161a4853270af",
+      "status": true
+    },
+    {
+      "studentId": "s_168e27d4abd14165b95cfd305573a67b",
+      "status": false
+    },
+    {
+      "studentId": "s_9f4f0952720f4047883fc426705ae9d1",
+      "status": false
+    },
+    {
+      "studentId": "s_a5814bc371df4bdd842784a080a237a2",
+      "status": true
+    },
+    {
+      "studentId": "s_6d938e984f224d91b4fd82d475fabfe9",
+      "status": true
+    },
+    {
+      "studentId": "s_19bccb35692a46ac955c47a70eda01d4",
+      "status": true
+    },
+    {
+      "studentId": "s_c5d981464e0b4c1a97cbaf347b2f3572",
+      "status": true
+    },
+    {
+      "studentId": "s_af935bfbec3c4442b424f02cf6b6b039",
+      "status": true
+    },
+    {
+      "studentId": "s_51a5fc14a32442518f221d99ddd474c8",
+      "status": true
+    },
+    {
+      "studentId": "s_43a4a4ab37954471a448deb64aa7b64e",
+      "status": true
+    },
+    {
+      "studentId": "s_421b16b6502342838ba0e05e47fac011",
+      "status": true
+    },
+    {
+      "studentId": "s_519394d67c164229b19d9ff2c8220cf1",
+      "status": true
+    },
+    {
+      "studentId": "s_1822ed0689ea4a9f8f34fc288dddf812",
+      "status": true
+    },
+    {
+      "studentId": "s_c57b2aeee813411c84f5218a0863da57",
+      "status": true
+    },
+    {
+      "studentId": "s_ce4102332c02479ca8c5c8d0e3bbbbc0",
+      "status": true
+    },
+    {
+      "studentId": "s_a8fda76ca7cb4cf19c05626b48a33f5e",
+      "status": true
+    },
+    {
+      "studentId": "s_5af7b5131f7145a883893c4d1e6e993a",
+      "status": true
+    },
+    {
+      "studentId": "s_abfe075f8b3e4686bf953cb124bebf43",
+      "status": true
+    },
+    {
+      "studentId": "s_21fc604f40034dd489d0b614e97de8d3",
+      "status": true
+    },
+    {
+      "studentId": "s_84d56751b99d4cfaa165edc796252539",
+      "status": true
+    },
+    {
+      "studentId": "s_5ea760a58d83472faf4553619b84a6cb",
+      "status": true
+    },
+    {
+      "studentId": "s_1f6af1296d03474e82dcc723742b1a6e",
+      "status": true
+    },
+    {
+      "studentId": "s_01587e5c1ac24789a3dc04f68663e70e",
+      "status": true
+    },
+    {
+      "studentId": "s_fab50bd235d541ec9235a40ba2ceea96",
+      "status": true
+    },
+    {
+      "studentId": "s_52b99922f4e44e1686062b880aee7f67",
+      "status": true
+    },
+    {
+      "studentId": "s_8f812d549f3d40a78a5747c5117d31b4",
+      "status": true
+    },
+    {
+      "studentId": "s_725686af60e7407d8706a6e8fea784a5",
+      "status": true
+    }
+  ]
+}
