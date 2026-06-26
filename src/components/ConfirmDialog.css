@@ -1,0 +1,124 @@
+.confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.confirm-modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.confirm-modal-card {
+  width: 100%;
+  max-width: 290px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.9);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.confirm-modal-overlay.open .confirm-modal-card {
+  transform: scale(1);
+}
+
+.confirm-modal-content {
+  padding: 20px 16px;
+}
+
+.confirm-modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 6px;
+}
+
+.confirm-modal-message {
+  font-size: 13px;
+  color: var(--text-color);
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.confirm-modal-divider {
+  height: 1px;
+  background-color: rgba(0, 0, 0, 0.15);
+  width: 100%;
+}
+
+html.dark .confirm-modal-divider {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.confirm-modal-actions {
+  display: flex;
+  height: 44px;
+}
+
+.confirm-modal-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  font-weight: 400;
+  cursor: pointer;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  outline: none;
+  transition: background-color 0.15s ease;
+}
+
+.confirm-modal-btn:active {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+html.dark .confirm-modal-btn:active {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.confirm-modal-btn.cancel {
+  font-weight: 500;
+}
+
+.confirm-modal-btn.confirm-danger {
+  color: var(--danger-color);
+  font-weight: 600;
+}
+
+.confirm-modal-btn.confirm-default {
+  font-weight: 600;
+}
+
+.confirm-modal-btn-divider {
+  width: 1px;
+  background-color: rgba(0, 0, 0, 0.15);
+  height: 100%;
+}
+
+html.dark .confirm-modal-btn-divider {
+  background-color: rgba(255, 255, 255, 0.15);
+}
