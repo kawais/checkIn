@@ -247,7 +247,7 @@ export default function ClassesPage() {
       <div className={`drawer-container glass-panel ${isDrawerOpen ? 'open' : ''}`}>
         <div className="drawer-header">
           <button className="drawer-text-btn cancel" onClick={closeDrawer}>取消</button>
-          <span class="drawer-title">新建班级</span>
+          <span className="drawer-title">新建班级</span>
           <button className="drawer-text-btn confirm" disabled={isUploading} onClick={handleCreateClass}>
             {isUploading ? '导入中' : '完成'}
           </button>
