@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, use } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/utils/api';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import './checkin.css';
 
 export default function CheckInPage({ params }) {
@@ -16,6 +17,7 @@ export default function CheckInPage({ params }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const getTodayDateString = () => {
     const d = new Date();
@@ -127,9 +129,7 @@ export default function CheckInPage({ params }) {
   };
 
   const goBack = () => {
-    if (confirm('确定要退出签到吗？当前进度不会保存。')) {
-      router.push(`/class/${classId}`);
-    }
+    setIsConfirmOpen(true);
   };
 
   const toggleRecordStatus = (index) => {
@@ -295,6 +295,19 @@ export default function CheckInPage({ params }) {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        title="确认退出"
+        message="确定要退出签到吗？当前进度不会保存。"
+        confirmText="确定退出"
+        cancelText="取消"
+        type="danger"
+        onConfirm={() => {
+          setIsConfirmOpen(false);
+          router.push(`/class/${classId}`);
+        }}
+        onCancel={() => setIsConfirmOpen(false)}
+      />
     </div>
   );
 }
