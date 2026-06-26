@@ -11,6 +11,21 @@ const api = {
     });
   },
   request: async (url, options = {}) => {
+    let finalUrl = url;
+    if (options.params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(options.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, value);
+        }
+      });
+      const qs = searchParams.toString();
+      if (qs) {
+        finalUrl = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
+      }
+      delete options.params;
+    }
+
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const headers = {
       ...options.headers,
@@ -19,7 +34,7 @@ const api = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url, {
+    const response = await fetch(finalUrl, {
       ...options,
       headers
     });
