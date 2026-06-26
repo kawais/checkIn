@@ -101,6 +101,8 @@ html.dark .confirm-modal-btn:active {
 }
 
 .confirm-modal-btn.cancel {
+  color: var(--text-color);
+  opacity: 0.8;
   font-weight: 500;
 }
 
