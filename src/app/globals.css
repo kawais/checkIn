@@ -4,14 +4,14 @@
   --success-color: #34C759;
   --danger-color: #FF3B30;
   --warning-color: #FF9500;
-  
+
   /* System Background & Text Colors (Light Mode) */
   --bg-color: #F2F2F7;
   --text-color: #000000;
   --text-secondary: #8E8E93;
-  
+
   /* Glassmorphism Tokens (Light Mode) */
-  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg: rgba(255, 255, 255, 1);
   --glass-border: 1px solid rgba(255, 255, 255, 0.3);
   --glass-blur: blur(20px);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
@@ -24,9 +24,9 @@ html.dark {
   --bg-color: #000000;
   --text-color: #FFFFFF;
   --text-secondary: #8E8E93;
-  
+
   /* Glassmorphism Tokens (Dark Mode) */
-  --glass-bg: rgba(28, 28, 30, 0.7);
+  --glass-bg: rgba(28, 28, 30, 0.9);
   --glass-border: 1px solid rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
