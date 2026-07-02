@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
 import { getAuthUser } from '@/utils/jwt';
+import * as kv from '@/utils/kv';
 
-const CLASSES_DIR = path.join(process.cwd(), 'data/classes');
-const RECORDS_DIR = path.join(process.cwd(), 'data/records');
 const classIdRegex = /^[a-zA-Z0-9_-]+$/;
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -26,23 +23,31 @@ export async function POST(req) {
       return NextResponse.json({ error: '请求体格式错误，必须包含 attendance 数组' }, { status: 400 });
     }
 
-    const classFilePath = path.join(CLASSES_DIR, `${classId}.json`);
-    try {
-      await fs.access(classFilePath);
-    } catch (err) {
+    // 校验班级是否存在
+    const classKey = `class:${user.id}:${classId}`;
+    const classData = await kv.get(classKey);
+    if (!classData) {
       return NextResponse.json({ error: '班级不存在' }, { status: 404 });
     }
 
-    const classRecordsDir = path.join(RECORDS_DIR, classId);
-    await fs.mkdir(classRecordsDir, { recursive: true });
+    // 计算写入的 KV 月度聚合记录 Key
+    const yearMonth = date.substring(0, 7); // 提取 'YYYY-MM'
+    const recordKey = `record:${classId}:${yearMonth}`;
 
-    const recordFilePath = path.join(classRecordsDir, `${date}.json`);
-    const recordData = { date, attendance };
+    // 获取并更新该月份的记录
+    const existingRecordsStr = await kv.get(recordKey);
+    const monthlyRecords = existingRecordsStr ? JSON.parse(existingRecordsStr) : {};
 
-    await fs.writeFile(recordFilePath, JSON.stringify(recordData, null, 2), 'utf-8');
+    // 写入或更新当前日期的记录
+    monthlyRecords[date] = { date, attendance };
+
+    // 保存回 KV
+    await kv.put(recordKey, JSON.stringify(monthlyRecords));
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error submitting attendance:', error);
     return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
   }
 }
+
