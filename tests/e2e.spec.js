@@ -4,7 +4,6 @@ import path from 'path';
 test.describe('托管签到系统端到端测试', () => {
   
   test('教师登录 - 创建班级 - 学生签到 - 历史考勤查询 完整用户旅程', async ({ page }) => {
-    try {
       // 1. 访问登录页面
       await page.goto('/login');
       await expect(page).toHaveTitle('托管签到系统');
@@ -125,10 +124,6 @@ test.describe('托管签到系统端到端测试', () => {
     // 点击关闭按钮
     await detailDrawer.locator('.drawer-close-btn').click();
     await expect(detailDrawer).not.toHaveClass(/open/);
-    } catch (err) {
-      await page.screenshot({ path: 'test-results/failure-error.png' });
-      throw err;
-    }
   });
 
   test('自定义确认对话框 (ConfirmDialog) 交互验证', async ({ page }) => {

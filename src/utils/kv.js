@@ -65,6 +65,8 @@ export async function deleteKey(key) {
   }
 }
 
+export { deleteKey as delete };
+
 export async function list(options = {}) {
   if (isProduction) {
     return await globalThis.my_kv.list(options);
@@ -83,22 +85,24 @@ export async function list(options = {}) {
     const classesDir = path.resolve(process.cwd(), baseDataDir, 'classes');
     try {
       const files = await fs.readdir(classesDir);
-      for (const file of files) {
-        if (!file.endsWith('.json')) continue;
+      const jsonFiles = files.filter(file => file.endsWith('.json'));
+      const readPromises = jsonFiles.map(async (file) => {
         const filePath = path.join(classesDir, file);
         try {
           const content = await fs.readFile(filePath, 'utf-8');
           const data = JSON.parse(content);
-          // 强化错误捕获与结构验证，若没有 teacherId 或 data.id 则静默跳过
           if (data && typeof data === 'object' && data.id && data.teacherId) {
             if (!teacherId || data.teacherId === teacherId) {
-              keys.push({ key: `class:${data.teacherId}:${data.id}` });
+              return { key: `class:${data.teacherId}:${data.id}` };
             }
           }
         } catch {
-          // 静默跳过损坏或不符合格式的 JSON
+          // Ignore bad or non-JSON class files
         }
-      }
+        return null;
+      });
+      const results = await Promise.all(readPromises);
+      keys.push(...results.filter(Boolean));
     } catch (err) {
       if (err.code !== 'ENOENT') throw err;
     }

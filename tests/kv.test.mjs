@@ -5,7 +5,7 @@ import path from 'path';
 // 1. 设置测试环境下的临时数据根目录，以隔离测试数据
 process.env.KV_DATA_DIR = 'data_test_temp';
 
-import { get, put, deleteKey, list } from '../src/utils/kv.js';
+import { get, put, delete as deleteKey, list } from '../src/utils/kv.js';
 
 async function runTests() {
   console.log('Running KV ESM tests...');
