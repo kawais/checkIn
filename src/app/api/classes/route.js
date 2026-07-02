@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
 import crypto from 'crypto';
 import * as xlsx from 'xlsx';
 import { getAuthUser } from '@/utils/jwt';
-
-const CLASSES_DIR = path.join(process.cwd(), 'data/classes');
+import * as kv from '@/utils/kv';
 
 // GET: 获取当前老师的所有班级
 export async function GET(req) {
@@ -15,28 +12,24 @@ export async function GET(req) {
   }
 
   try {
-    await fs.mkdir(CLASSES_DIR, { recursive: true });
-    const files = await fs.readdir(CLASSES_DIR);
-    const classes = [];
-
-    for (const file of files) {
-      if (!file.endsWith('.json')) continue;
-      const filePath = path.join(CLASSES_DIR, file);
+    const listResult = await kv.list({ prefix: 'class:' + user.id + ':' });
+    const keys = Array.isArray(listResult?.keys) ? listResult.keys : [];
+    const readPromises = keys.map(async (item) => {
+      const classContent = await kv.get(item.key);
+      if (!classContent) return null;
       try {
-        const fileContent = await fs.readFile(filePath, 'utf-8');
-        const classData = JSON.parse(fileContent);
-
-        if (classData.teacherId === user.id) {
-          classes.push({
-            id: classData.id,
-            name: classData.name,
-            studentCount: Array.isArray(classData.students) ? classData.students.length : 0
-          });
-        }
+        const classData = JSON.parse(classContent);
+        return {
+          id: classData.id,
+          name: classData.name,
+          studentCount: Array.isArray(classData.students) ? classData.students.length : 0
+        };
       } catch (err) {
-        console.error(`Error reading class file ${file}:`, err);
+        console.error(`Error parsing class data for ${item.key}:`, err);
+        return null;
       }
-    }
+    });
+    const classes = (await Promise.all(readPromises)).filter(Boolean);
     return NextResponse.json(classes);
   } catch (error) {
     console.error('Error fetching classes:', error);
@@ -124,9 +117,7 @@ export async function POST(req) {
       students
     };
 
-    await fs.mkdir(CLASSES_DIR, { recursive: true });
-    const classFilePath = path.join(CLASSES_DIR, `${classId}.json`);
-    await fs.writeFile(classFilePath, JSON.stringify(newClass, null, 2), 'utf-8');
+    await kv.put(`class:${user.id}:${classId}`, JSON.stringify(newClass));
 
     return NextResponse.json({ success: true, class: newClass });
   } catch (error) {

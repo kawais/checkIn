@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
 import { getAuthUser } from '@/utils/jwt';
+import * as kv from '@/utils/kv';
 
-const CLASSES_DIR = path.join(process.cwd(), 'data/classes');
 const classIdRegex = /^[a-zA-Z0-9_-]+$/;
 
 export async function GET(req, { params }) {
@@ -18,8 +16,11 @@ export async function GET(req, { params }) {
   }
 
   try {
-    const classFilePath = path.join(CLASSES_DIR, `${id}.json`);
-    const fileContent = await fs.readFile(classFilePath, 'utf-8');
+    const classKey = `class:${user.id}:${id}`;
+    const fileContent = await kv.get(classKey);
+    if (!fileContent) {
+      return NextResponse.json({ error: '班级不存在' }, { status: 404 });
+    }
     const classData = JSON.parse(fileContent);
 
     if (classData.teacherId !== user.id) {
