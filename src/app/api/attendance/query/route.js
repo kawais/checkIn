@@ -1,12 +1,26 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
 import { getAuthUser } from '@/utils/jwt';
+import * as kv from '@/utils/kv';
 
-const CLASSES_DIR = path.join(process.cwd(), 'data/classes');
-const RECORDS_DIR = path.join(process.cwd(), 'data/records');
 const classIdRegex = /^[a-zA-Z0-9_-]+$/;
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+// 辅助函数：根据起止日期计算跨越的月份 ['YYYY-MM', ...]
+function getMonthsInRange(startDate, endDate) {
+  const [sYear, sMonth] = startDate.split('-').map(Number);
+  const [eYear, eMonth] = endDate.split('-').map(Number);
+  const result = [];
+  let year = sYear, month = sMonth;
+  while (year < eYear || (year === eYear && month <= eMonth)) {
+    result.push(`${year}-${String(month).padStart(2, '0')}`);
+    month++;
+    if (month > 12) {
+      month = 1;
+      year++;
+    }
+  }
+  return result;
+}
 
 export async function GET(req) {
   const user = getAuthUser(req);
@@ -30,14 +44,13 @@ export async function GET(req) {
   }
 
   try {
-    const classFilePath = path.join(CLASSES_DIR, `${classId}.json`);
-    let classData;
-    try {
-      const fileContent = await fs.readFile(classFilePath, 'utf-8');
-      classData = JSON.parse(fileContent);
-    } catch (err) {
+    // 1. 获取班级数据以确定学生列表
+    const classKey = `class:${user.id}:${classId}`;
+    const classContent = await kv.get(classKey);
+    if (!classContent) {
       return NextResponse.json({ error: '班级不存在' }, { status: 404 });
     }
+    const classData = JSON.parse(classContent);
 
     if (!classData || !Array.isArray(classData.students)) {
       return NextResponse.json({ error: '班级数据格式错误' }, { status: 400 });
@@ -57,56 +70,51 @@ export async function GET(req) {
       }
     }
 
-    const classRecordsDir = path.join(RECORDS_DIR, classId);
-    let files = [];
-    try {
-      files = await fs.readdir(classRecordsDir);
-    } catch (err) {
-      files = [];
+    // 2. 获取涉及的月份键名
+    let targetMonths = [];
+    if (startDate && endDate) {
+      targetMonths = getMonthsInRange(startDate, endDate);
+    } else {
+      // 若没有提供完整的起止时间，则利用 list 找出该班级的所有月份 key
+      const listResult = await kv.list({ prefix: `record:${classId}:` });
+      const keys = Array.isArray(listResult?.keys) ? listResult.keys : [];
+      targetMonths = keys.map(k => k.key.split(':')[2]);
     }
 
-    const targetFiles = files
-      .filter(file => file.endsWith('.json'))
-      .map(file => {
-        const dateStr = path.basename(file, '.json');
-        return { file, dateStr };
-      })
-      .filter(({ dateStr }) => {
-        if (startDate && dateStr < startDate) return false;
-        if (endDate && dateStr > endDate) return false;
-        return true;
-      });
-
-    const readPromises = targetFiles.map(async ({ file, dateStr }) => {
-      const recordFilePath = path.join(classRecordsDir, file);
+    // 3. 并发获取并解析各月的考勤记录
+    const readPromises = targetMonths.map(async (yearMonth) => {
+      const recordKey = `record:${classId}:${yearMonth}`;
       try {
-        const fileContent = await fs.readFile(recordFilePath, 'utf-8');
-        const dayRecord = JSON.parse(fileContent);
-        return { dateStr, dayRecord };
+        const content = await kv.get(recordKey);
+        return content ? JSON.parse(content) : null;
       } catch (err) {
-        console.error(`Error reading daily record file ${file}:`, err);
+        console.error(`Error parsing monthly record for ${recordKey}:`, err);
         return null;
       }
     });
 
-    const dayRecordsResults = await Promise.all(readPromises);
+    const monthlyRecordsResults = (await Promise.all(readPromises)).filter(Boolean);
 
-    for (const result of dayRecordsResults) {
-      if (!result || !result.dayRecord) continue;
-      const { dateStr, dayRecord } = result;
+    // 4. 在内存中合并并按起止日期范围过滤
+    for (const monthlyData of monthlyRecordsResults) {
+      for (const [dateStr, dayRecord] of Object.entries(monthlyData)) {
+        // 进行日期范围的过滤
+        if (startDate && dateStr < startDate) continue;
+        if (endDate && dateStr > endDate) continue;
 
-      if (Array.isArray(dayRecord.attendance)) {
-        for (const item of dayRecord.attendance) {
-          if (item && item.studentId) {
-            const sId = item.studentId;
-            if (studentMap[sId]) {
-              const status = !!item.status;
-              studentMap[sId].records.push({ date: dateStr, status });
+        if (dayRecord && Array.isArray(dayRecord.attendance)) {
+          for (const item of dayRecord.attendance) {
+            if (item && item.studentId) {
+              const sId = item.studentId;
+              if (studentMap[sId]) {
+                const status = !!item.status;
+                studentMap[sId].records.push({ date: dateStr, status });
 
-              if (status) {
-                studentMap[sId].totalCount += 1;
-                const month = dateStr.substring(0, 7); // 'YYYY-MM'
-                studentMap[sId].monthlyCounts[month] = (studentMap[sId].monthlyCounts[month] || 0) + 1;
+                if (status) {
+                  studentMap[sId].totalCount += 1;
+                  const month = dateStr.substring(0, 7); // 'YYYY-MM'
+                  studentMap[sId].monthlyCounts[month] = (studentMap[sId].monthlyCounts[month] || 0) + 1;
+                }
               }
             }
           }
@@ -114,6 +122,7 @@ export async function GET(req) {
       }
     }
 
+    // 5. 按照学生列表顺序返回结果
     const resultStudents = studentsList
       .filter(s => s && s.id)
       .map(s => studentMap[s.id]);
@@ -124,3 +133,4 @@ export async function GET(req) {
     return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
   }
 }
+

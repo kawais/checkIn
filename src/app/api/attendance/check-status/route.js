@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
 import { getAuthUser } from '@/utils/jwt';
+import * as kv from '@/utils/kv';
 
-const RECORDS_DIR = path.join(process.cwd(), 'data/records');
 const classIdRegex = /^[a-zA-Z0-9_-]+$/;
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -21,11 +19,27 @@ export async function GET(req) {
     return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
   }
 
+  const yearMonth = date.substring(0, 7);
+
+  // 校验当前教师对该班级是否拥有归属权，防止水平越权
+  const classKey = `class:${user.id}:${classId}`;
+  const classExists = await kv.get(classKey);
+  if (!classExists) {
+    return NextResponse.json({ error: '班级不存在' }, { status: 404 });
+  }
+
   try {
-    const recordFilePath = path.join(RECORDS_DIR, classId, `${date}.json`);
-    await fs.access(recordFilePath);
-    return NextResponse.json({ submitted: true });
+    const recordStr = await kv.get(`record:${classId}:${yearMonth}`);
+    if (recordStr) {
+      const monthlyRecords = JSON.parse(recordStr);
+      if (monthlyRecords[date]) {
+        return NextResponse.json({ submitted: true });
+      }
+    }
+    return NextResponse.json({ submitted: false });
   } catch (err) {
+    console.error('Error checking status:', err);
     return NextResponse.json({ submitted: false });
   }
 }
+
