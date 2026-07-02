@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
 import fsSync from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import { signToken } from '@/utils/jwt';
+import * as kv from '@/utils/kv';
 
 const logFile = path.join(process.cwd(), 'debug-login.log');
 function log(msg) {
@@ -26,9 +26,12 @@ export async function POST(req) {
       return NextResponse.json({ error: '用户名和密码不能为空' }, { status: 400 });
     }
 
-    const teachersPath = path.join(process.cwd(), 'data/teachers.json');
-    log(`Reading teachers file at: ${teachersPath}`);
-    const data = await fs.readFile(teachersPath, 'utf-8');
+    log(`Reading teachers data from KV`);
+    const data = await kv.get('teacher:all');
+    if (!data) {
+      log('No teacher data found in KV');
+      return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
+    }
     log(`Teachers file read success, length: ${data.length}`);
     
     const teachers = JSON.parse(data);
