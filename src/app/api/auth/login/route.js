@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server';
-import fsSync from 'fs';
-import path from 'path';
 import bcrypt from 'bcryptjs';
 import { signToken } from '@/utils/jwt';
 import * as kv from '@/utils/kv';
 
-const logFile = path.join(process.cwd(), 'debug-login.log');
 function log(msg) {
-  try {
-    fsSync.appendFileSync(logFile, `[${new Date().toISOString()}] ${msg}\n`);
-  } catch (err) {
-    // ignore logging error
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[${new Date().toISOString()}] ${msg}`);
   }
 }
 
@@ -18,7 +13,9 @@ export async function POST(req) {
   log('Login API POST started');
   try {
     const body = await req.json();
-    log(`Body parsed: ${JSON.stringify(body)}`);
+    const logBody = { ...body };
+    if (logBody.password) logBody.password = '[REDACTED]';
+    log(`Body parsed: ${JSON.stringify(logBody)}`);
     const { username, password } = body;
 
     if (!username || !password) {
@@ -34,7 +31,13 @@ export async function POST(req) {
     }
     log(`Teachers file read success, length: ${data.length}`);
     
-    const teachers = JSON.parse(data);
+    let teachers;
+    try {
+      teachers = JSON.parse(data);
+    } catch (parseErr) {
+      log(`Failed to parse teacher data: ${parseErr.message}`);
+      return NextResponse.json({ error: '数据损坏，请联系管理员' }, { status: 500 });
+    }
     const teacher = teachers.find(t => t.username === username);
     log(`Teacher found: ${teacher ? teacher.username : 'not found'}`);
 
