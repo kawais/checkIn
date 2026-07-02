@@ -36,7 +36,15 @@ export async function POST(req) {
 
     // 获取并更新该月份的记录
     const existingRecordsStr = await kv.get(recordKey);
-    const monthlyRecords = existingRecordsStr ? JSON.parse(existingRecordsStr) : {};
+    let monthlyRecords = {};
+    if (existingRecordsStr) {
+      try {
+        monthlyRecords = JSON.parse(existingRecordsStr);
+      } catch (parseErr) {
+        console.error(`[Warning] Monthly record JSON parse failed for key ${recordKey}, resetting:`, parseErr);
+        monthlyRecords = {}; // 降级容错，重置为空对象以保证后续可以打卡
+      }
+    }
 
     // 写入或更新当前日期的记录
     monthlyRecords[date] = { date, attendance };
