@@ -4,9 +4,9 @@ import { signToken } from '@/utils/jwt';
 import * as kv from '@/utils/kv';
 
 function log(msg) {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[${new Date().toISOString()}] ${msg}`);
-  }
+  // if (process.env.NODE_ENV !== 'production') {
+  console.log(`[${new Date().toISOString()}] ${msg}`);
+  // }
 }
 
 export async function POST(req) {
@@ -30,7 +30,7 @@ export async function POST(req) {
       return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
     }
     log(`Teachers file read success, length: ${data.length}`);
-    
+
     let teachers;
     try {
       teachers = JSON.parse(data);
@@ -49,7 +49,7 @@ export async function POST(req) {
     log('Comparing password...');
     const isMatch = await bcrypt.compare(password, teacher.password);
     log(`Password compare match: ${isMatch}`);
-    
+
     if (!isMatch) {
       log('Password mismatch');
       return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
