@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import { signToken } from '@/utils/jwt';
 import * as kv from '@/utils/kv';
 
+export const runtime = 'edge';
+
 function log(msg) {
   // if (process.env.NODE_ENV !== 'production') {
   console.log(`[${new Date().toISOString()}] ${msg}`);
@@ -47,7 +49,7 @@ export async function POST(req) {
     }
 
     log('Comparing password...');
-    const isMatch = await bcrypt.compare(password, teacher.password);
+    const isMatch = bcrypt.compareSync(password, teacher.password);
     log(`Password compare match: ${isMatch}`);
 
     if (!isMatch) {
@@ -56,7 +58,7 @@ export async function POST(req) {
     }
 
     log('Signing token...');
-    const token = signToken({ id: teacher.id, name: teacher.name });
+    const token = await signToken({ id: teacher.id, name: teacher.name });
     log('Token signed successfully');
 
     return NextResponse.json({

@@ -1,15 +1,21 @@
+import { spawn } from 'child_process';
+
+process.env.KV_DATA_DIR = 'data_test_temp';
+
+const serverCode = `const s=new Map();s.set('teacher:all',JSON.stringify([{"id":"t_1","name":"张老师","username":"admin","password":"$2a$10$tkSlvqufNF/taoZaYj/LsOwfxlsyAgqf8u4/hwcm1caZMB0mSD0Fi"}]));require("http").createServer((q,r)=>{const u=new URL(q.url,"http://x");const k=u.searchParams.get("k");if(q.url.startsWith("/get")){r.end(s.get(k)||"")}else if(q.url.startsWith("/put")){let b="";q.on("data",c=>b+=c);q.on("end",()=>{s.set(k,b);r.end("ok")})}else if(q.url.startsWith("/del")){s.delete(k);r.end("ok")}else if(q.url.startsWith("/list")){const p=u.searchParams.get("p")||"";const ks=[];for(const x of s.keys()){if(x.startsWith(p))ks.push({key:x})};r.end(JSON.stringify({keys:ks,complete:true}))}}).listen(3009);`;
+spawn('node', ['-e', serverCode], { detached: true, stdio: 'ignore' }).unref();
+
+// Wait for server ready
+await new Promise(r => setTimeout(r, 200));
+
 import assert from 'assert';
 import fs from 'fs/promises';
 import path from 'path';
-
-// 1. 设置测试环境下的临时数据根目录，以隔离测试数据
-process.env.KV_DATA_DIR = 'data_test_temp';
-
 import { get, put, delete as deleteKey, list } from '../src/utils/kv.js';
 
 async function runTests() {
   console.log('Running KV ESM tests...');
-  const tempDir = path.resolve(process.cwd(), process.env.KV_DATA_DIR);
+  const tempDir = path.resolve(process.cwd(), 'data_test_temp');
 
   try {
     // 确保清理了可能存在的历史临时目录

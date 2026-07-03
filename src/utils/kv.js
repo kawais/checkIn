@@ -85,24 +85,19 @@ export async function list(options = {}) {
     const classesDir = path.resolve(process.cwd(), baseDataDir, 'classes');
     try {
       const files = await fs.readdir(classesDir);
-      const jsonFiles = files.filter(file => file.endsWith('.json'));
-      const readPromises = jsonFiles.map(async (file) => {
+      for (const file of files) {
+        if (!file.endsWith('.json')) continue;
         const filePath = path.join(classesDir, file);
         try {
           const content = await fs.readFile(filePath, 'utf-8');
           const data = JSON.parse(content);
           if (data && typeof data === 'object' && data.id && data.teacherId) {
             if (!teacherId || data.teacherId === teacherId) {
-              return { key: `class:${data.teacherId}:${data.id}` };
+              keys.push({ key: `class:${data.teacherId}:${data.id}` });
             }
           }
-        } catch {
-          // Ignore bad or non-JSON class files
-        }
-        return null;
-      });
-      const results = await Promise.all(readPromises);
-      keys.push(...results.filter(Boolean));
+        } catch {}
+      }
     } catch (err) {
       if (err.code !== 'ENOENT') throw err;
     }

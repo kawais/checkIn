@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getAuthUser } from '@/utils/jwt';
 import * as kv from '@/utils/kv';
 
+export const runtime = 'edge';
+
 const classIdRegex = /^[a-zA-Z0-9_-]+$/;
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -23,7 +25,7 @@ function getMonthsInRange(startDate, endDate) {
 }
 
 export async function GET(req) {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   if (!user) {
     return NextResponse.json({ error: '未授权，请登录' }, { status: 401 });
   }

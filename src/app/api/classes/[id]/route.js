@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { getAuthUser } from '@/utils/jwt';
 import * as kv from '@/utils/kv';
 
+export const runtime = 'edge';
+
 const classIdRegex = /^[a-zA-Z0-9_-]+$/;
 
 export async function GET(req, { params }) {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   if (!user) {
     return NextResponse.json({ error: '未授权，请登录' }, { status: 401 });
   }
