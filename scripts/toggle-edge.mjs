@@ -43,6 +43,22 @@ for (const relPath of files) {
   fs.writeFileSync(filePath, content, 'utf-8');
 }
 
+// 对 kv.js 进行物理文件的动态拷贝替换，以实现开发环境与线上生产包的物理级隔离
+const targetKvPath = path.resolve(process.cwd(), 'src/utils/kv.js');
+if (action === 'disable') {
+  const localKvPath = path.resolve(process.cwd(), 'src/utils/kv.local.js');
+  if (fs.existsSync(localKvPath)) {
+    fs.copyFileSync(localKvPath, targetKvPath);
+    console.log('Swapped kv.js to kv.local.js for local development/testing.');
+  }
+} else {
+  const edgeKvPath = path.resolve(process.cwd(), 'src/utils/kv.edge.js');
+  if (fs.existsSync(edgeKvPath)) {
+    fs.copyFileSync(edgeKvPath, targetKvPath);
+    console.log('Swapped kv.js to kv.edge.js for cloud production deployment.');
+  }
+}
+
 if (action === 'disable') {
   // 自动写入种子教师数据，以防本地登录测试缺失数据库物理文件
   const dataDir = path.resolve(process.cwd(), 'data');
