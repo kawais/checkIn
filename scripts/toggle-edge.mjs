@@ -42,4 +42,24 @@ for (const relPath of files) {
   }
   fs.writeFileSync(filePath, content, 'utf-8');
 }
+
+if (action === 'disable') {
+  // 自动写入种子教师数据，以防本地登录测试缺失数据库物理文件
+  const dataDir = path.resolve(process.cwd(), 'data');
+  const teachersPath = path.resolve(dataDir, 'teachers.json');
+  if (!fs.existsSync(teachersPath)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+    const seedData = JSON.stringify([
+      {
+        "id": "t_1",
+        "name": "张老师",
+        "username": "admin",
+        "password": "$2a$10$tkSlvqufNF/taoZaYj/LsOwfxlsyAgqf8u4/hwcm1caZMB0mSD0Fi"
+      }
+    ], null, 2);
+    fs.writeFileSync(teachersPath, seedData, 'utf-8');
+    console.log('Successfully seeded default teachers.json for local testing.');
+  }
+}
+
 console.log(`Successfully completed toggle action: ${action}`);

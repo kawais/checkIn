@@ -60,6 +60,51 @@ test.describe('托管签到系统端到端测试', () => {
     await page.click('button:has-text("签到")');
     await page.waitForURL(/\/class\/c_[a-f0-9]+\/checkin/);
 
+    // ====================================================
+    // 6.1 织入自定义确认对话框 (ConfirmDialog) 交互验证
+    // ====================================================
+    const workbenchUrl = page.url().replace(/\/checkin$/, '');
+    const overlay = page.locator('.confirm-modal-overlay');
+
+    // 点击返回按钮，拉起自定义确认弹窗
+    await page.click('.back-btn');
+    await expect(overlay).toHaveClass(/open/);
+    await expect(page.locator('#confirm-dialog-title')).toHaveText('确认退出');
+    await expect(page.locator('#confirm-dialog-message')).toHaveText('确定要退出签到吗？当前进度不会保存。');
+
+    // 测试取消按钮点击
+    await page.click('#confirm-dialog-cancel-btn');
+    await expect(overlay).not.toHaveClass(/open/);
+    expect(page.url()).toContain('/checkin'); // 仍在签到页
+
+    // 测试按 Escape 键取消弹窗
+    await page.click('.back-btn');
+    await expect(overlay).toHaveClass(/open/);
+    await page.keyboard.press('Escape');
+    await expect(overlay).not.toHaveClass(/open/);
+
+    // 测试点击遮罩层 (Overlay) 触发取消
+    await page.click('.back-btn');
+    await expect(overlay).toHaveClass(/open/);
+    await overlay.click({ position: { x: 5, y: 5 } });
+    await expect(overlay).not.toHaveClass(/open/);
+
+    // 测试确定按钮点击退出跳转
+    await page.click('.back-btn');
+    await expect(overlay).toHaveClass(/open/);
+    await page.click('#confirm-dialog-confirm-btn');
+    
+    // 验证弹窗关闭并成功返回工作台
+    await page.waitForURL(workbenchUrl);
+    expect(page.url()).toBe(workbenchUrl);
+
+    // 重新点击“签到”按钮，再次进入签到页面以继续打卡
+    await page.click('button:has-text("签到")');
+    await page.waitForURL(/\/class\/c_[a-f0-9]+\/checkin/);
+    // ====================================================
+    // ConfirmDialog 交互验证结束，继续签到提交
+    // ====================================================
+
     // 第一位学生：学生甲 -> 出勤 (是)
     await expect(page.locator('.student-seq')).toHaveText('序号 1');
     await expect(page.locator('.student-name')).toHaveText('学生甲');
@@ -124,59 +169,5 @@ test.describe('托管签到系统端到端测试', () => {
     // 点击关闭按钮
     await detailDrawer.locator('.drawer-close-btn').click();
     await expect(detailDrawer).not.toHaveClass(/open/);
-  });
-
-  test('自定义确认对话框 (ConfirmDialog) 交互验证', async ({ page }) => {
-    // 1. 登录并进入班级工作台
-    await page.goto('/login');
-    await page.fill('#username', 'admin');
-    await page.fill('#password', '123456');
-    await page.click('button[type="submit"]', { force: true });
-    await page.waitForURL('**/classes');
-
-    // 2. 进入首个班级工作台
-    await page.locator('.class-card').first().click();
-    await page.waitForURL(/\/class\/c_[a-f0-9]+/);
-    const workbenchUrl = page.url();
-
-    // 3. 点击“签到”按钮进入签到页
-    await page.click('button:has-text("签到")');
-    await page.waitForURL(/\/class\/c_[a-f0-9]+\/checkin/);
-
-    // 4. 点击返回按钮，拉起自定义确认弹窗
-    await page.click('.back-btn');
-    
-    // 验证弹窗的 DOM 属性与文案
-    const overlay = page.locator('.confirm-modal-overlay');
-    await expect(overlay).toHaveClass(/open/);
-    await expect(page.locator('#confirm-dialog-title')).toHaveText('确认退出');
-    await expect(page.locator('#confirm-dialog-message')).toHaveText('确定要退出签到吗？当前进度不会保存。');
-
-    // 5. 测试取消按钮点击
-    await page.click('#confirm-dialog-cancel-btn');
-    await expect(overlay).not.toHaveClass(/open/);
-    expect(page.url()).toContain('/checkin'); // 仍在签到页
-
-    // 6. 测试按 Escape 键取消弹窗
-    await page.click('.back-btn');
-    await expect(overlay).toHaveClass(/open/);
-    await page.keyboard.press('Escape');
-    await expect(overlay).not.toHaveClass(/open/);
-
-    // 7. 测试点击遮罩层 (Overlay) 触发取消
-    await page.click('.back-btn');
-    await expect(overlay).toHaveClass(/open/);
-    // 点击 overlay 元素偏外围的位置
-    await overlay.click({ position: { x: 5, y: 5 } });
-    await expect(overlay).not.toHaveClass(/open/);
-
-    // 8. 测试确定按钮点击跳转
-    await page.click('.back-btn');
-    await expect(overlay).toHaveClass(/open/);
-    await page.click('#confirm-dialog-confirm-btn');
-    
-    // 验证弹窗关闭并成功返回工作台
-    await page.waitForURL(workbenchUrl);
-    expect(page.url()).toBe(workbenchUrl);
   });
 });

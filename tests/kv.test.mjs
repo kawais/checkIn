@@ -98,8 +98,12 @@ async function runTests() {
 
     console.log('All KV adapter tests passed successfully!');
   } finally {
-    // 彻底清理测试生成的临时目录，保持工作区干净
-    await fs.rm(tempDir, { recursive: true, force: true });
+    try {
+      // 彻底清理测试生成的临时目录，保持工作区干净
+      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch (err) {
+      // Tolerate Windows EBUSY folder locking during concurrent runs
+    }
   }
 }
 
