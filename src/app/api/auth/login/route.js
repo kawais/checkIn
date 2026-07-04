@@ -3,8 +3,7 @@ import bcrypt from 'bcryptjs';
 import { signToken } from '@/utils/jwt';
 import * as kv from '@/utils/kv';
 
-export const runtime = 'edge';
-
+// 
 function log(msg) {
   // if (process.env.NODE_ENV !== 'production') {
   console.log(`[${new Date().toISOString()}] ${msg}`);

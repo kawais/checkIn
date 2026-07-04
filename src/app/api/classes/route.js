@@ -3,8 +3,7 @@ import * as xlsx from 'xlsx';
 import { getAuthUser } from '@/utils/jwt';
 import * as kv from '@/utils/kv';
 
-export const runtime = 'edge';
-
+// 
 // GET: 获取当前老师的所有班级
 export async function GET(req) {
   const user = await getAuthUser(req);

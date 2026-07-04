@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthUser } from '@/utils/jwt';
 import * as kv from '@/utils/kv';
 
-export const runtime = 'edge';
-
+// 
 const classIdRegex = /^[a-zA-Z0-9_-]+$/;
 
 export async function GET(req, { params }) {

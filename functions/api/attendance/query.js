@@ -1,8 +1,6 @@
-import { NextResponse } from 'next/server';
-import { getAuthUser } from '@/utils/jwt';
-import * as kv from '@/utils/kv';
+import { getAuthUser } from '../../../src/utils/jwt';
+import * as kv from '../kv';
 
-// 
 const classIdRegex = /^[a-zA-Z0-9_-]+$/;
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -23,38 +21,63 @@ function getMonthsInRange(startDate, endDate) {
   return result;
 }
 
-export async function GET(req) {
-  const user = await getAuthUser(req);
-  if (!user) {
-    return NextResponse.json({ error: '未授权，请登录' }, { status: 401 });
+export async function onRequest({ request, env }) {
+  if (request.method !== 'GET') {
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      status: 405,
+      headers: { 'content-type': 'application/json; charset=UTF-8' }
+    });
   }
 
-  const { searchParams } = new URL(req.url);
+  const user = await getAuthUser(request);
+  if (!user) {
+    return new Response(JSON.stringify({ error: '未授权，请登录' }), {
+      status: 401,
+      headers: { 'content-type': 'application/json; charset=UTF-8' }
+    });
+  }
+
+  const { searchParams } = new URL(request.url);
   const classId = searchParams.get('classId');
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
 
   if (!classId || !classIdRegex.test(classId)) {
-    return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
+    return new Response(JSON.stringify({ error: '参数格式错误' }), {
+      status: 400,
+      headers: { 'content-type': 'application/json; charset=UTF-8' }
+    });
   }
   if (startDate && !dateRegex.test(startDate)) {
-    return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
+    return new Response(JSON.stringify({ error: '参数格式错误' }), {
+      status: 400,
+      headers: { 'content-type': 'application/json; charset=UTF-8' }
+    });
   }
   if (endDate && !dateRegex.test(endDate)) {
-    return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
+    return new Response(JSON.stringify({ error: '参数格式错误' }), {
+      status: 400,
+      headers: { 'content-type': 'application/json; charset=UTF-8' }
+    });
   }
 
   try {
     // 1. 获取班级数据以确定学生列表
     const classKey = `class:${user.id}:${classId}`;
-    const classContent = await kv.get(classKey);
+    const classContent = await kv.get(env, classKey);
     if (!classContent) {
-      return NextResponse.json({ error: '班级不存在' }, { status: 404 });
+      return new Response(JSON.stringify({ error: '班级不存在' }), {
+        status: 404,
+        headers: { 'content-type': 'application/json; charset=UTF-8' }
+      });
     }
     const classData = JSON.parse(classContent);
 
     if (!classData || !Array.isArray(classData.students)) {
-      return NextResponse.json({ error: '班级数据格式错误' }, { status: 400 });
+      return new Response(JSON.stringify({ error: '班级数据格式错误' }), {
+        status: 400,
+        headers: { 'content-type': 'application/json; charset=UTF-8' }
+      });
     }
 
     const studentMap = {};
@@ -77,7 +100,7 @@ export async function GET(req) {
       targetMonths = getMonthsInRange(startDate, endDate);
     } else {
       // 若没有提供完整的起止时间，则利用 list 找出该班级的所有月份 key
-      const listResult = await kv.list({ prefix: `record:${classId}:` });
+      const listResult = await kv.list(env, { prefix: `record:${classId}:` });
       const keys = Array.isArray(listResult?.keys) ? listResult.keys : [];
       targetMonths = keys.map(k => k.key.split(':')[2]);
     }
@@ -86,7 +109,7 @@ export async function GET(req) {
     const readPromises = targetMonths.map(async (yearMonth) => {
       const recordKey = `record:${classId}:${yearMonth}`;
       try {
-        const content = await kv.get(recordKey);
+        const content = await kv.get(env, recordKey);
         return content ? JSON.parse(content) : null;
       } catch (err) {
         console.error(`Error parsing monthly record for ${recordKey}:`, err);
@@ -128,10 +151,15 @@ export async function GET(req) {
       .filter(s => s && s.id)
       .map(s => studentMap[s.id]);
 
-    return NextResponse.json({ students: resultStudents });
+    return new Response(JSON.stringify({ students: resultStudents }), {
+      status: 200,
+      headers: { 'content-type': 'application/json; charset=UTF-8' }
+    });
   } catch (error) {
     console.error('Error querying attendance:', error);
-    return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
+    return new Response(JSON.stringify({ error: '服务器内部错误' }), {
+      status: 500,
+      headers: { 'content-type': 'application/json; charset=UTF-8' }
+    });
   }
 }
-

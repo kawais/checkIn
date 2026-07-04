@@ -21,7 +21,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'node scripts/toggle-edge.mjs disable && npm run build && npx next start -p 3002 -H 127.0.0.1',
+    command: 'npm run build && npx next start -p 3002 -H 127.0.0.1',
     url: 'http://127.0.0.1:3002',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
