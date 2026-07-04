@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthUser } from '@/utils/jwt';
 import * as kv from '@/utils/kv';
 
-// export const runtime = 'edge';
+export const runtime = 'edge';
 
 const classIdRegex = /^[a-zA-Z0-9_-]+$/;
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
