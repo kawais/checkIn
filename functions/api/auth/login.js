@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { signToken } from '../../../src/utils/jwt';
+import { signToken } from '../jwt';
 import * as kv from '../kv';
 
 function log(msg) {

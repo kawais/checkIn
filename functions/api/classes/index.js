@@ -1,5 +1,5 @@
 import * as xlsx from 'xlsx';
-import { getAuthUser } from '../../../src/utils/jwt';
+import { getAuthUser } from '../jwt';
 import * as kv from '../kv';
 
 export async function onRequest({ request, env }) {

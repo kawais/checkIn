@@ -1,4 +1,4 @@
-import { getAuthUser } from '../../../src/utils/jwt';
+import { getAuthUser } from '../jwt';
 import * as kv from '../kv';
 
 const classIdRegex = /^[a-zA-Z0-9_-]+$/;
