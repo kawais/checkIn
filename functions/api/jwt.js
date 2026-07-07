@@ -1,5 +1,3 @@
-const JWT_SECRET = process.env.JWT_SECRET || 'apple_style_secret_key';
-
 const textEncoder = new TextEncoder();
 
 // Helper: base64url encoding
@@ -29,9 +27,10 @@ function base64urlDecode(str) {
   return bytes;
 }
 
-// Import signature key
-async function getCryptoKey() {
-  const keyBuf = textEncoder.encode(JWT_SECRET);
+// Import signature key using env.JWT_SECRET (complies with EdgeOne environment variables standard)
+async function getCryptoKey(env) {
+  const secret = (env && env.JWT_SECRET) || 'apple_style_secret_key';
+  const keyBuf = textEncoder.encode(secret);
   return await crypto.subtle.importKey(
     'raw',
     keyBuf,
@@ -41,7 +40,7 @@ async function getCryptoKey() {
   );
 }
 
-export async function signToken(payload) {
+export async function signToken(env, payload) {
   const header = { alg: 'HS256', typ: 'JWT' };
   const now = Math.floor(Date.now() / 1000);
   const fullPayload = {
@@ -54,7 +53,7 @@ export async function signToken(payload) {
   const encodedPayload = base64url(textEncoder.encode(JSON.stringify(fullPayload)));
   const tokenInput = `${encodedHeader}.${encodedPayload}`;
 
-  const cryptoKey = await getCryptoKey();
+  const cryptoKey = await getCryptoKey(env);
   const signatureBuf = await crypto.subtle.sign(
     'HMAC',
     cryptoKey,
@@ -65,7 +64,7 @@ export async function signToken(payload) {
   return `${tokenInput}.${encodedSignature}`;
 }
 
-export async function verifyToken(token) {
+export async function verifyToken(env, token) {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
@@ -73,7 +72,7 @@ export async function verifyToken(token) {
     const [headerStr, payloadStr, signatureStr] = parts;
     const tokenInput = `${headerStr}.${payloadStr}`;
 
-    const cryptoKey = await getCryptoKey();
+    const cryptoKey = await getCryptoKey(env);
     const signatureBuf = base64urlDecode(signatureStr);
 
     const isValid = await crypto.subtle.verify(
@@ -97,9 +96,9 @@ export async function verifyToken(token) {
   }
 }
 
-export async function getAuthUser(req) {
+export async function getAuthUser(env, req) {
   const authHeader = req.headers.get('authorization');
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return null;
-  return await verifyToken(token);
+  return await verifyToken(env, token);
 }

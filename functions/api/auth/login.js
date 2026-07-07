@@ -75,7 +75,7 @@ export async function onRequest({ request, env }) {
     }
 
     log('Signing token...');
-    const token = await signToken({ id: teacher.id, name: teacher.name });
+    const token = await signToken(env, { id: teacher.id, name: teacher.name });
     log('Token signed successfully');
 
     return new Response(JSON.stringify({

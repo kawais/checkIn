@@ -12,7 +12,7 @@ export async function onRequest({ request, env }) {
     });
   }
 
-  const user = await getAuthUser(request);
+  const user = await getAuthUser(env, request);
   if (!user) {
     return new Response(JSON.stringify({ error: '未授权，请登录' }), {
       status: 401,
