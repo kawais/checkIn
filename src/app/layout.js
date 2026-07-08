@@ -2,8 +2,8 @@ import "./globals.css";
 import AuthGuard from "@/components/AuthGuard";
 
 export const metadata = {
-  title: "托管签到系统",
-  description: "用于老师统计每日的托管情况",
+  title: "签到系统",
+  description: "用于老师统计每日的签到情况",
 };
 
 export default function RootLayout({ children }) {
