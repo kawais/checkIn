@@ -410,7 +410,7 @@ export default function QueryPage({ params }) {
       >
         <div className="drawer-drag-bar"></div>
         <div className="drawer-header">
-          <span className="drawer-title">{selectedStudent?.name} 的托管明细</span>
+          <span className="drawer-title">{selectedStudent?.name} 的签到明细</span>
           <button className="drawer-close-btn" onClick={closeDrawer}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -425,7 +425,7 @@ export default function QueryPage({ params }) {
           </div>
           {sortedRecords.length === 0 ? (
             <div className="empty-detail-state">
-              <p>该期间内无打卡记录</p>
+              <p>该期间内无签到记录</p>
             </div>
           ) : (
             <div className="detail-list-wrapper">
@@ -434,7 +434,7 @@ export default function QueryPage({ params }) {
                   <div className="detail-date">{formatDate(record.date)}</div>
                   <div className={`detail-status ${record.status ? 'status-present' : 'status-absent'}`}>
                     <span className="status-dot"></span>
-                    <span>{record.status ? '已托管' : '未托管'}</span>
+                    <span>{record.status ? '已' : '未'}签到</span>
                   </div>
                 </div>
               ))}
