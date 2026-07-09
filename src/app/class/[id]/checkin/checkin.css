@@ -104,7 +104,9 @@ html.dark .date-input:focus {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 主体区域 */
@@ -157,7 +159,8 @@ html.dark .control-btn:hover {
 /* 学生网格平铺区域 */
 .student-grid-section {
   flex: 1;
-  padding: 8px 4px 110px 4px; /* 留出底部悬浮栏的空间 */
+  padding: 8px 4px 110px 4px;
+  /* 留出底部悬浮栏的空间 */
   overflow-y: auto;
 }
 
@@ -236,12 +239,12 @@ html.dark .student-btn-card:hover {
 
 /* 固定悬浮底部栏 */
 .sticky-bottom-bar {
-  position: absolute;
-  bottom: 20px;
+  position: fixed;
+  bottom: 0px;
   left: 20px;
   right: 20px;
   padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.65);
+  background: #ffffffe0;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(0, 0, 0, 0.05);
@@ -307,6 +310,7 @@ html.dark .sticky-bottom-bar {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
