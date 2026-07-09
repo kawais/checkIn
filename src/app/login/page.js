@@ -76,7 +76,7 @@ export default function LoginPage() {
               </defs>
             </svg>
           </div>
-          <h1>托管签到系统</h1>
+          <h1>签到系统</h1>
           <p className="subtitle">教师端登录</p>
         </div>
 
