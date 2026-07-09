@@ -71,30 +71,30 @@ test.describe('托管签到系统端到端测试', () => {
 
     // 点击返回按钮，拉起自定义确认弹窗
     await page.click('.back-btn');
-    await expect(overlay).toHaveClass(/open/);
+    await expect(overlay).toBeAttached();
     await expect(page.locator('#confirm-dialog-title')).toHaveText('确认退出');
     await expect(page.locator('#confirm-dialog-message')).toHaveText('确定要退出签到吗？当前进度不会保存。');
 
     // 测试取消按钮点击
     await page.click('#confirm-dialog-cancel-btn');
-    await expect(overlay).not.toHaveClass(/open/);
+    await expect(overlay).not.toBeAttached();
     expect(page.url()).toContain('/checkin'); // 仍在签到页
 
     // 测试按 Escape 键取消弹窗
     await page.click('.back-btn');
-    await expect(overlay).toHaveClass(/open/);
+    await expect(overlay).toBeAttached();
     await page.keyboard.press('Escape');
-    await expect(overlay).not.toHaveClass(/open/);
+    await expect(overlay).not.toBeAttached();
 
     // 测试点击遮罩层 (Overlay) 触发取消
     await page.click('.back-btn');
-    await expect(overlay).toHaveClass(/open/);
+    await expect(overlay).toBeAttached();
     await overlay.click({ position: { x: 5, y: 5 } });
-    await expect(overlay).not.toHaveClass(/open/);
+    await expect(overlay).not.toBeAttached();
 
     // 测试确定按钮点击退出跳转
     await page.click('.back-btn');
-    await expect(overlay).toHaveClass(/open/);
+    await expect(overlay).toBeAttached();
     await page.click('#confirm-dialog-confirm-btn');
     
     // 验证弹窗关闭并成功返回工作台
@@ -108,33 +108,31 @@ test.describe('托管签到系统端到端测试', () => {
     // ConfirmDialog 交互验证结束，继续签到提交
     // ====================================================
 
-    // 第一位学生：学生甲 -> 出勤 (是)
-    await expect(page.locator('.student-seq')).toHaveText('序号 1');
-    await expect(page.locator('.student-name')).toHaveText('学生甲');
-    await page.click('.present-btn');
+    // 点击第一位学生：学生甲 -> 已签到 (出勤)
+    const studentCardA = page.locator('.student-btn-card:has-text("学生甲")');
+    await studentCardA.click();
+    await expect(studentCardA).toHaveClass(/present/);
 
-    // 第二位学生：学生乙 -> 出勤 (是)
-    await expect(page.locator('.student-seq')).toHaveText('序号 2');
-    await expect(page.locator('.student-name')).toHaveText('学生乙');
-    await page.click('.present-btn');
+    // 点击第二位学生：学生乙 -> 已签到 (出勤)
+    const studentCardB = page.locator('.student-btn-card:has-text("学生乙")');
+    await studentCardB.click();
+    await expect(studentCardB).toHaveClass(/present/);
 
-    // 第三位学生：学生丙 -> 缺勤 (否)
-    await expect(page.locator('.student-seq')).toHaveText('序号 3');
-    await expect(page.locator('.student-name')).toHaveText('学生丙');
-    await page.click('.absent-btn');
+    // 第三位学生：学生丙 -> 未点击 (默认为未签到)
+    const studentCardC = page.locator('.student-btn-card:has-text("学生丙")');
+    await expect(studentCardC).not.toHaveClass(/present/);
 
-    // 3位学生考勤完毕后，会自动拉起二次确认抽屉
-    const confirmDrawer = page.locator('.drawer-container');
-    await expect(confirmDrawer).toHaveClass(/open/);
-    await expect(page.locator('.drawer-title')).toContainText('确认');
+    // 检查底部悬浮统计：已签到 2，未签到 1
+    await expect(page.locator('.sticky-bottom-bar .present-count')).toHaveText('已签到: 2 人');
+    await expect(page.locator('.sticky-bottom-bar .absent-count')).toHaveText('未签到: 1 人');
 
-    // 检查汇总统计数：应到 3，实到 2，缺勤 1
-    await expect(confirmDrawer.locator('.stat-card.total .stat-num')).toHaveText('3');
-    await expect(confirmDrawer.locator('.stat-card.present .stat-num')).toHaveText('2');
-    await expect(confirmDrawer.locator('.stat-card.absent .stat-num')).toHaveText('1');
-
-    // 点击“确认提交”
+    // 点击“确认提交”，拉起提交确认弹窗
     await page.click('button:has-text("确认提交")');
+    await expect(overlay).toBeAttached();
+    await expect(page.locator('#confirm-dialog-title')).toHaveText('确认提交');
+
+    // 点击确定提交
+    await page.click('#confirm-dialog-confirm-btn');
 
     // 确认后应该跳回工作台
     await page.waitForURL(/\/class\/c_[a-f0-9]+/);
