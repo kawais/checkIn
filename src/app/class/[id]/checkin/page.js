@@ -137,34 +137,36 @@ export default function CheckInPage({ params }) {
           <p>正在载入学生名单...</p>
         </div>
       ) : (
-        <main className="checkin-main animate-fade-in">
-          {/* 全局控制按钮 */}
-          <div className="global-controls-section">
-            <button className="control-btn" onClick={handleSelectAll}>全选</button>
-            <button className="control-btn" onClick={handleInvertSelection}>反选</button>
-          </div>
-
-          {/* 学生网格平铺 */}
-          <div className="student-grid-section">
-            <div className="student-grid">
-              {attendanceRecords.map((record) => (
-                <div
-                  key={record.studentId}
-                  className={`student-btn-card ${record.status ? 'present' : ''}`}
-                  onClick={() => toggleStudentStatus(record.studentId)}
-                >
-                  <span className="student-seq">{record.seqNum}</span>
-                  <span className="student-name">{record.name}</span>
-                  <svg className="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </div>
-              ))}
+        <>
+          <main className="checkin-main animate-fade-in">
+            {/* 全局控制按钮 */}
+            <div className="global-controls-section">
+              <button className="control-btn" onClick={handleSelectAll}>全选</button>
+              <button className="control-btn" onClick={handleInvertSelection}>反选</button>
             </div>
-          </div>
+
+            {/* 学生网格平铺 */}
+            <div className="student-grid-section">
+              <div className="student-grid">
+                {attendanceRecords.map((record) => (
+                  <div
+                    key={record.studentId}
+                    className={`student-btn-card ${record.status ? 'present' : ''}`}
+                    onClick={() => toggleStudentStatus(record.studentId)}
+                  >
+                    <span className="student-seq">{record.seqNum}</span>
+                    <span className="student-name">{record.name}</span>
+                    <svg className="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </main>
 
           {/* 固定悬浮底部栏 */}
-          <div className="sticky-bottom-bar">
+          <div className="sticky-bottom-bar animate-fade-in">
             <div className="stats-summary">
               <span className="stat-item present-count">已签到: {stats.present} 人</span>
               <span className="stat-item absent-count">未签到: {stats.absent} 人</span>
@@ -173,7 +175,7 @@ export default function CheckInPage({ params }) {
               {isSubmitting ? '提交中' : '确认提交'}
             </button>
           </div>
-        </main>
+        </>
       )}
 
       {isConfirmOpen && (
