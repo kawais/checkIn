@@ -6,7 +6,7 @@ test.describe('托管签到系统端到端测试', () => {
   test('教师登录 - 创建班级 - 学生签到 - 历史考勤查询 完整用户旅程', async ({ page }) => {
       // 1. 访问登录页面
       await page.goto('/login');
-      await expect(page).toHaveTitle('托管签到系统');
+      await expect(page).toHaveTitle('签到系统');
       await page.screenshot({ path: 'test-results/login-load.png' });
 
       // 2. 输入账号密码并登录
@@ -52,6 +52,9 @@ test.describe('托管签到系统端到端测试', () => {
 
     // 5. 点击进入班级工作台
     await classCard.click();
+    // 验证 loading 遮罩立刻显现
+    await expect(page.locator('.full-page-loading')).toBeVisible();
+    await expect(page.locator('.full-page-loading p')).toHaveText('正在载入班级...');
     await page.waitForURL(/\/class\/c_[a-f0-9]+/);
     await expect(page.locator('.class-name')).toHaveText(testClassName);
     await expect(page.locator('.student-meta')).toContainText('学生总数: 3 名');

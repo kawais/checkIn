@@ -13,6 +13,7 @@ export default function ClassesPage() {
   const [classesList, setClassesList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDark, setIsDark] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // 底部抽屉状态
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -133,6 +134,7 @@ export default function ClassesPage() {
   };
 
   const goToClass = (classId) => {
+    setIsRedirecting(true);
     router.push(`/class/${classId}`);
   };
 
@@ -230,7 +232,7 @@ export default function ClassesPage() {
                   </div>
                 </div>
                 <div className="class-card-footer">
-                  <span>进入考勤</span>
+                  <span>开始签到</span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="9 18 15 12 9 6"></polyline>
                   </svg>
@@ -315,6 +317,12 @@ export default function ClassesPage() {
           </div>
         </div>
       </div>
+      {isRedirecting && (
+        <div className="full-page-loading">
+          <div className="spinner"></div>
+          <p>正在载入班级...</p>
+        </div>
+      )}
     </div>
   );
 }
