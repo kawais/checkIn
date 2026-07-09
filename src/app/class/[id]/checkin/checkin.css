@@ -230,7 +230,6 @@ html.dark .student-btn-card:hover {
 
 .student-btn-card .student-name {
   font-size: 14px;
-  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
