@@ -45,7 +45,7 @@ export async function onRequest({ request, env }) {
     // 4. 清理逻辑：获取该班级所有的月份记录
     const listResult = await kv.list(env, { prefix: `record:${classId}:` });
     const keys = Array.isArray(listResult?.keys) ? listResult.keys.map(k => k.name) : [];
-    
+
     const targetYearMonth = date.substring(0, 7); // 比如 "2026-01"
 
     for (const key of keys) {
@@ -97,7 +97,7 @@ export async function onRequest({ request, env }) {
     });
   } catch (error) {
     console.error('Error clearing attendance:', error);
-    return new Response(JSON.stringify({ error: '服务器内部错误' }), {
+    return new Response(JSON.stringify({ error: '服务器内部错误', e: error }), {
       status: 500,
       headers: { 'content-type': 'application/json; charset=UTF-8' }
     });
