@@ -217,3 +217,246 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+.clear-icon {
+  background: rgba(255, 59, 48, 0.1);
+  color: var(--danger-color);
+}
+
+/* Modal 弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 400px;
+  background: var(--glass-bg);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.modal-header .close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.modal-header .close-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.date-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-date-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.5);
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--text-color);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.modal-date-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.modal-btn.cancel-btn {
+  background: none;
+  color: var(--text-secondary);
+}
+
+.modal-btn.cancel-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.modal-btn.confirm-btn {
+  background-color: var(--primary-color);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
+}
+
+.modal-btn.confirm-btn:hover {
+  opacity: 0.9;
+}
+
+.modal-btn.confirm-btn.danger {
+  background-color: var(--danger-color);
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.2);
+}
+
+.modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 暗色模式适配 */
+html.dark .modal-date-input {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+html.dark .modal-header .close-btn:hover,
+html.dark .modal-btn.cancel-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 清理 Modal 精美状态细节扩展 */
+.warning-text {
+  color: var(--danger-color);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.warning-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.success-text {
+  color: var(--success-color);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.error-text {
+  color: var(--danger-color);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.status-desc {
+  font-size: 15px;
+  color: var(--text-color);
+  line-height: 1.5;
+  margin: 10px 0;
+}
+
+.error-message-box {
+  background: rgba(255, 59, 48, 0.06);
+  color: var(--danger-color);
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  border: 1px solid rgba(255, 59, 48, 0.12);
+  word-break: break-all;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.tip-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 缩放动画 */
+.animate-scale-up {
+  animation: scaleUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
