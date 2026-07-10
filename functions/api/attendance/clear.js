@@ -97,7 +97,7 @@ export async function onRequest({ request, env }) {
     });
   } catch (error) {
     console.error('Error clearing attendance:', error);
-    return new Response(JSON.stringify({ error: '服务器内部错误', e: error }), {
+    return new Response(JSON.stringify({ error: '服务器内部错误', e: error.message }), {
       status: 500,
       headers: { 'content-type': 'application/json; charset=UTF-8' }
     });
