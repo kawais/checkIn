@@ -14,9 +14,10 @@ export default function QueryPage({ params }) {
   const [isLoading, setIsLoading] = useState(false);
   const [months, setMonths] = useState([]);
 
-  // 默认日期：当月首日和今日
-  const getFirstDayOfMonth = () => {
+  // 默认日期：6个月前的首日和今日
+  const getSixMonthsAgoFirstDay = () => {
     const d = new Date();
+    d.setMonth(d.getMonth() - 6);
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     return `${year}-${month}-01`;
@@ -30,7 +31,7 @@ export default function QueryPage({ params }) {
     return `${year}-${month}-${day}`;
   };
 
-  const [startDate, setStartDate] = useState(getFirstDayOfMonth());
+  const [startDate, setStartDate] = useState(getSixMonthsAgoFirstDay());
   const [endDate, setEndDate] = useState(getTodayDateString());
 
   // 缓存班级中学生的序号
@@ -128,7 +129,7 @@ export default function QueryPage({ params }) {
   };
 
   const handleClear = () => {
-    setStartDate(getFirstDayOfMonth());
+    setStartDate(getSixMonthsAgoFirstDay());
     setEndDate(getTodayDateString());
   };
 
