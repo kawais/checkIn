@@ -44,11 +44,12 @@ export async function onRequest({ request, env }) {
 
     // 4. 清理逻辑：获取该班级所有的月份记录
     const listResult = await kv.list(env, { prefix: `record:${classId}:` });
-    const keys = Array.isArray(listResult?.keys) ? listResult.keys.map(k => k.name) : [];
+    const keys = Array.isArray(listResult?.keys) ? listResult.keys.map(k => k.key || k.name).filter(Boolean) : [];
 
     const targetYearMonth = date.substring(0, 7); // 比如 "2026-01"
 
     for (const key of keys) {
+      if (!key || typeof key !== 'string') continue;
       // 提取 key 中的年份月份：record:classId:YYYY-MM -> YYYY-MM
       const parts = key.split(':');
       if (parts.length < 3) continue;
