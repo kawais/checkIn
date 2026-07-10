@@ -14,12 +14,27 @@ export default function ClassHomePage({ params }) {
   const [isSubmittedToday, setIsSubmittedToday] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 清理功能相关状态
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [clearDate, setClearDate] = useState('');
+  const [isClearing, setIsClearing] = useState(false);
+  const [clearStatus, setClearStatus] = useState('idle'); // 'idle' | 'success' | 'error'
+  const [clearErrorMessage, setClearErrorMessage] = useState('');
+
   const getTodayDateString = () => {
     const d = new Date();
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  };
+
+  const getDefaultClearDate = () => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 6);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}-01`;
   };
 
   useEffect(() => {
@@ -69,6 +84,34 @@ export default function ClassHomePage({ params }) {
 
   const queryRecords = () => {
     router.push(`/class/${classId}/query`);
+  };
+
+  const openClearModal = () => {
+    setClearStatus('idle');
+    setClearDate(getDefaultClearDate());
+    setIsClearModalOpen(true);
+  };
+
+  const handleCloseClearModal = () => {
+    setIsClearModalOpen(false);
+    if (clearStatus === 'success') {
+      checkTodayStatus();
+    }
+  };
+
+  const handleClearRecords = async () => {
+    setIsClearing(true);
+    setClearStatus('idle');
+    try {
+      await api.post('/api/attendance/clear', { classId, date: clearDate });
+      setClearStatus('success');
+    } catch (error) {
+      console.error('清理签到数据失败:', error);
+      setClearStatus('error');
+      setClearErrorMessage(error.response?.data?.error || error.message || '未知错误');
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   return (
@@ -149,7 +192,104 @@ export default function ClassHomePage({ params }) {
                 </svg>
               </div>
             </button>
+
+            {/* 签到记录清理 */}
+            <button className="action-card-btn clear-btn glass-panel" onClick={openClearModal}>
+              <div className="btn-icon clear-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </div>
+              <div className="btn-text">
+                <h3>清理</h3>
+                <p>清理指定日期之前的历史签到数据</p>
+              </div>
+              <div className="btn-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </button>
           </div>
+
+          {/* 清理弹窗 Modal */}
+          {isClearModalOpen && (
+            <div className="modal-overlay animate-fade-in" onClick={() => !isClearing && handleCloseClearModal()}>
+              <div className="modal-content glass-panel animate-scale-up" onClick={(e) => e.stopPropagation()}>
+                {clearStatus === 'idle' && (
+                  <>
+                    <div className="modal-header">
+                      <span className="modal-title warning-text">⚠️ 危险操作：数据清理</span>
+                      <button className="close-btn" onClick={handleCloseClearModal} disabled={isClearing}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="modal-body">
+                      <p className="warning-desc">此操作将永久删除当前班级在所选日期（含）之前的所有历史打卡记录，数据删除后无法恢复！</p>
+                      <div className="form-group">
+                        <label className="form-label">截止日期：</label>
+                        <input 
+                          type="date" 
+                          value={clearDate} 
+                          max={getTodayDateString()} 
+                          onChange={(e) => setClearDate(e.target.value)} 
+                          className="modal-date-input"
+                          disabled={isClearing}
+                        />
+                        <span className="tip-text">此日期（含）之前的记录将被彻底清除</span>
+                      </div>
+                    </div>
+                    <div className="modal-footer">
+                      <button className="modal-btn cancel-btn" onClick={handleCloseClearModal} disabled={isClearing}>取消</button>
+                      <button 
+                        className="modal-btn confirm-btn danger" 
+                        onClick={handleClearRecords} 
+                        disabled={isClearing}
+                      >
+                        {isClearing ? '正在清理...' : '确认删除'}
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {clearStatus === 'success' && (
+                  <>
+                    <div className="modal-header">
+                      <span className="modal-title success-text">✅ 清理成功</span>
+                    </div>
+                    <div className="modal-body">
+                      <p className="status-desc">所选日期 <strong>{clearDate}</strong>（含）之前的签到记录已成功清理完成。</p>
+                    </div>
+                    <div className="modal-footer">
+                      <button className="modal-btn confirm-btn" onClick={handleCloseClearModal}>我知道了</button>
+                    </div>
+                  </>
+                )}
+
+                {clearStatus === 'error' && (
+                  <>
+                    <div className="modal-header">
+                      <span className="modal-title error-text">❌ 清理失败</span>
+                    </div>
+                    <div className="modal-body">
+                      <p className="status-desc">清理数据时发生错误：</p>
+                      <p className="error-message-box">{clearErrorMessage}</p>
+                    </div>
+                    <div className="modal-footer">
+                      <button className="modal-btn cancel-btn" onClick={() => setClearStatus('idle')}>返回重试</button>
+                      <button className="modal-btn confirm-btn danger" onClick={handleCloseClearModal}>关闭</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </main>
       )}
     </div>
