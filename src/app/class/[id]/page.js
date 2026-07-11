@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, useCallback } from 'react';
+import { useState, useEffect, use, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/utils/api';
 import './classhome.css';
@@ -37,15 +37,30 @@ export default function ClassHomePage({ params }) {
   const [clearStatus, setClearStatus] = useState('idle'); // 'idle' | 'success' | 'error'
   const [clearErrorMessage, setClearErrorMessage] = useState('');
 
+  // 组件挂载状态与 Ref，防组件卸载后调用 setState/alert/router
+  const isMountedRef = useRef(true);
+
+  // 编辑班级相关状态与 Ref
+  const fileInputRef = useRef(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editClassName, setEditClassName] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadError, setUploadError] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+
   const fetchClassDetails = useCallback(async () => {
     try {
       const res = await api.get(`/api/classes/${classId}`);
-      setClassName(res.data.name);
-      setStudentCount(res.data.students ? res.data.students.length : 0);
+      if (isMountedRef.current) {
+        setClassName(res.data.name);
+        setStudentCount(res.data.students ? res.data.students.length : 0);
+      }
     } catch (error) {
       console.error('获取班级详情失败:', error);
-      alert('获取数据失败，请稍后重试');
-      router.push('/classes');
+      if (isMountedRef.current) {
+        alert('获取数据失败，请稍后重试');
+        router.push('/classes');
+      }
     }
   }, [classId, router]);
 
@@ -82,6 +97,7 @@ export default function ClassHomePage({ params }) {
 
     return () => {
       isMounted = false;
+      isMountedRef.current = false;
     };
   }, [classId, fetchClassDetails, checkTodayStatus]);
 
@@ -122,6 +138,69 @@ export default function ClassHomePage({ params }) {
       setClearErrorMessage(error.response?.data?.error || error.message || '未知错误');
     } finally {
       setIsClearing(false);
+    }
+  };
+
+  const openEditDrawer = () => {
+    setEditClassName(className);
+    setSelectedFile(null);
+    setUploadError('');
+    setIsDrawerOpen(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const closeEditDrawer = () => {
+    setIsDrawerOpen(false);
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const fileName = file.name.toLowerCase();
+      if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+        setUploadError('请选择 .xlsx 或 .xls 格式的文件');
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      if (file.size > 500 * 1024) {
+        setUploadError('文件大小不能超过 500KB');
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      setSelectedFile(file);
+      setUploadError('');
+    }
+  };
+
+  const handleSaveClass = async () => {
+    if (!editClassName.trim()) {
+      setUploadError('请输入班级名称');
+      return;
+    }
+
+    setUploadError('');
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append('name', editClassName.trim());
+    if (selectedFile) {
+      formData.append('file', selectedFile);
+    }
+
+    try {
+      await api.put(`/api/classes/${classId}`, formData);
+      closeEditDrawer();
+      await fetchClassDetails();
+    } catch (error) {
+      console.error('Failed to update class:', error);
+      const errMsg = error.response?.data?.error || '修改班级失败，请检查文件格式及网络';
+      setUploadError(errMsg);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -224,6 +303,25 @@ export default function ClassHomePage({ params }) {
                 </svg>
               </div>
             </button>
+
+            {/* 编辑班级 */}
+            <button className="action-card-btn edit-btn glass-panel" onClick={openEditDrawer}>
+              <div className="btn-icon edit-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+              </div>
+              <div className="btn-text">
+                <h3>编辑</h3>
+                <p>修改班级名称和重新上传班级学生花名册</p>
+              </div>
+              <div className="btn-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </button>
           </div>
 
           {/* 清理弹窗 Modal */}
@@ -303,6 +401,82 @@ export default function ClassHomePage({ params }) {
           )}
         </main>
       )}
+
+      {/* iOS 风格半屏抽屉 (Bottom Sheet) */}
+      <div className={`drawer-overlay ${isDrawerOpen ? 'open' : ''}`} onClick={() => !isUploading && closeEditDrawer()}></div>
+
+      <div className={`drawer-container glass-panel ${isDrawerOpen ? 'open' : ''}`}>
+        <div className="drawer-header">
+          <button className="drawer-text-btn cancel" disabled={isUploading} onClick={closeEditDrawer}>取消</button>
+          <span className="drawer-title">编辑班级</span>
+          <button className="drawer-text-btn confirm" disabled={isUploading} onClick={handleSaveClass}>
+            {isUploading ? '保存中' : '完成'}
+          </button>
+        </div>
+
+        <div className="drawer-body">
+          <div className="drawer-drag-bar"></div>
+
+          {uploadError && (
+            <div className="drawer-error">
+              <span>{uploadError}</span>
+            </div>
+          )}
+
+          <div className="drawer-form">
+            <div className="drawer-input-group">
+              <label>班级名称</label>
+              <input
+                value={editClassName}
+                onChange={(e) => setEditClassName(e.target.value)}
+                type="text"
+                placeholder="例如：一年级一班"
+                disabled={isUploading}
+              />
+            </div>
+
+            <div className="drawer-input-group">
+              <label>导入学生花名册 (.xlsx, .xls)</label>
+              <div
+                className={`file-upload-area ${selectedFile ? 'has-file' : ''}`}
+                onClick={() => !isUploading && fileInputRef.current.click()}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx, .xls"
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange}
+                />
+
+                {!selectedFile ? (
+                  <div className="upload-placeholder">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>点击选择 Excel 文件 (可选)</p>
+                  </div>
+                ) : (
+                  <div className="upload-selected">
+                    <svg className="file-success-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="9" y1="15" x2="15" y2="15"></line>
+                      <polyline points="12 12 12 18"></polyline>
+                    </svg>
+                    <p className="file-name">{selectedFile.name}</p>
+                    <p className="file-size">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                  </div>
+                )}
+              </div>
+              <p className="excel-tip">注意：Excel 文件必须包含 <strong>序号</strong> 和 <strong>姓名</strong> 两列。</p>
+              <p className="excel-tip" style={{ color: 'var(--danger-color)', marginTop: '4px' }}>💡 注意：如需新增学生，请增加新序号；请勿修改原序号与姓名的对应关系，亦勿删除已有序号，以防历史签到数据丢失。</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
