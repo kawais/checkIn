@@ -132,7 +132,11 @@ export async function onRequest({ request, env }) {
               const sId = item.studentId;
               if (studentMap[sId]) {
                 const status = !!item.status;
-                studentMap[sId].records.push({ date: dateStr, status });
+                studentMap[sId].records.push({
+                  date: dateStr,
+                  status,
+                  remark: item.remark || ''
+                });
 
                 if (status) {
                   studentMap[sId].totalCount += 1;
