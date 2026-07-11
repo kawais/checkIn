@@ -156,6 +156,20 @@ test.describe('托管签到系统端到端测试', () => {
     await expect(table.locator('tbody tr:nth-child(3) td.col-name')).toHaveText('学生丙');
     await expect(table.locator('tbody tr:nth-child(3) td.col-total')).toHaveText('0天');
 
+    // 验证导出 Excel 按钮在查询完成后可见
+    const exportBtn = page.locator('button:has-text("导出 Excel")');
+    await expect(exportBtn).toBeVisible();
+
+    // 监听并验证 Excel 下载
+    const downloadPromise = page.waitForEvent('download');
+    await exportBtn.click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toContain('考勤报表');
+    expect(download.suggestedFilename()).toContain('.xlsx');
+
+    const downloadPath = await download.path();
+    expect(downloadPath).not.toBeNull();
+
     // 点击学生甲的详情，拉起个人打卡清单
     await table.locator('tbody tr:nth-child(1) button:has-text("详情")').click();
 
