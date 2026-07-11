@@ -37,6 +37,9 @@ export default function ClassHomePage({ params }) {
   const [clearStatus, setClearStatus] = useState('idle'); // 'idle' | 'success' | 'error'
   const [clearErrorMessage, setClearErrorMessage] = useState('');
 
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [navigationText, setNavigationText] = useState('');
+
   // 组件挂载状态与 Ref，防组件卸载后调用 setState/alert/router
   const isMountedRef = useRef(true);
 
@@ -106,10 +109,14 @@ export default function ClassHomePage({ params }) {
   };
 
   const startCheckIn = () => {
+    setIsNavigating(true);
+    setNavigationText('正在载入签到页面...');
     router.push(`/class/${classId}/checkin`);
   };
 
   const queryRecords = () => {
+    setIsNavigating(true);
+    setNavigationText('正在载入查询报表...');
     router.push(`/class/${classId}/query`);
   };
 
@@ -477,6 +484,14 @@ export default function ClassHomePage({ params }) {
           </div>
         </div>
       </div>
+
+      {/* 页面跳转 loading */}
+      {isNavigating && (
+        <div className="full-page-loading">
+          <div className="spinner"></div>
+          <p>{navigationText}</p>
+        </div>
+      )}
     </div>
   );
 }
