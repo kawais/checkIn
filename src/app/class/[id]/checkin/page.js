@@ -208,6 +208,13 @@ export default function CheckInPage({ params }) {
                     onTouchStart={() => handleTouchStart(record.studentId)}
                     onTouchEnd={() => handleTouchEnd(record.studentId)}
                   >
+                    {record.remark && (
+                      <div className="student-remark-badge" title={record.remark}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+                        </svg>
+                      </div>
+                    )}
                     <span className="student-seq">{record.seqNum}</span>
                     <span className="student-name">{record.name}</span>
                     <svg className="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
@@ -259,6 +266,41 @@ export default function CheckInPage({ params }) {
           onConfirm={submitAttendance}
           onCancel={() => setIsSubmitConfirmOpen(false)}
         />
+      )}
+
+      {editingRecord && (
+        <div className="remark-modal-overlay" onClick={() => setEditingRecord(null)}>
+          <div className="remark-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="remark-modal-header">
+              <h3>填写备注原因</h3>
+              <p>学生: <span className="highlight">{editingRecord.name}</span></p>
+            </div>
+            <div className="remark-modal-body">
+              <textarea
+                className="remark-textarea"
+                placeholder="请输入未能签到的原因或其它备注..."
+                value={tempRemark}
+                onChange={(e) => setTempRemark(e.target.value)}
+                maxLength={100}
+                autoFocus
+              />
+            </div>
+            <div className="remark-modal-actions">
+              <button className="remark-btn btn-cancel" onClick={() => setEditingRecord(null)}>取消</button>
+              <button
+                className="remark-btn btn-save"
+                onClick={() => {
+                  setAttendanceRecords(prev =>
+                    prev.map(r => r.studentId === editingRecord.studentId ? { ...r, remark: tempRemark.trim() } : r)
+                  );
+                  setEditingRecord(null);
+                }}
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

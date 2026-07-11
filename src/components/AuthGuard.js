@@ -7,10 +7,12 @@ export default function AuthGuard({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -18,13 +20,9 @@ export default function AuthGuard({ children }) {
 
     const token = localStorage.getItem('token');
     if (!token && pathname !== '/login') {
-      setAuthorized(false);
       router.push('/login');
     } else if (token && pathname === '/login') {
-      setAuthorized(false);
       router.push('/classes');
-    } else {
-      setAuthorized(true);
     }
   }, [mounted, pathname, router]);
 
@@ -39,7 +37,8 @@ export default function AuthGuard({ children }) {
   }
 
   // 3. 拦截未授权受保护路由
-  if (!authorized) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  if (!token) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#F2F2F7', color: '#8E8E93', fontFamily: 'system-ui' }}>
         <p>正在验证权限...</p>

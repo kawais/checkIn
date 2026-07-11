@@ -1,9 +1,36 @@
 'use client';
 
-import { useState, useEffect, useMemo, use, useRef } from 'react';
+import { useState, useEffect, useMemo, use, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/utils/api';
 import './query.css';
+
+// 纯字符串的月份区间计算（规避时区偏移问题）
+const getMonthsInRange = (startStr, endStr) => {
+  if (!startStr || !endStr) return [];
+  const startMatch = startStr.match(/^(\d{4})-(\d{2})/);
+  const endMatch = endStr.match(/^(\d{4})-(\d{2})/);
+  if (!startMatch || !endMatch) return [];
+
+  const startYear = parseInt(startMatch[1], 10);
+  const startMonth = parseInt(startMatch[2], 10);
+  const endYear = parseInt(endMatch[1], 10);
+  const endMonth = parseInt(endMatch[2], 10);
+
+  const result = [];
+  let y = startYear;
+  let m = startMonth;
+
+  while (y < endYear || (y === endYear && m <= endMonth)) {
+    result.push(`${y}-${String(m).padStart(2, '0')}`);
+    m++;
+    if (m > 12) {
+      m = 1;
+      y++;
+    }
+  }
+  return result;
+};
 
 export default function QueryPage({ params }) {
   const router = useRouter();
@@ -48,7 +75,7 @@ export default function QueryPage({ params }) {
   const isDraggingRef = useRef(false);
 
   // 获取班级详情，获取准确的序号和班级名称
-  const fetchClassDetails = async () => {
+  const fetchClassDetails = useCallback(async () => {
     try {
       const res = await api.get(`/api/classes/${classId}`);
       setClassName(res.data.name);
@@ -62,37 +89,10 @@ export default function QueryPage({ params }) {
     } catch (error) {
       console.error('获取班级详情失败:', error);
     }
-  };
-
-  // 纯字符串的月份区间计算（规避时区偏移问题）
-  const getMonthsInRange = (startStr, endStr) => {
-    if (!startStr || !endStr) return [];
-    const startMatch = startStr.match(/^(\d{4})-(\d{2})/);
-    const endMatch = endStr.match(/^(\d{4})-(\d{2})/);
-    if (!startMatch || !endMatch) return [];
-
-    const startYear = parseInt(startMatch[1], 10);
-    const startMonth = parseInt(startMatch[2], 10);
-    const endYear = parseInt(endMatch[1], 10);
-    const endMonth = parseInt(endMatch[2], 10);
-
-    const result = [];
-    let y = startYear;
-    let m = startMonth;
-
-    while (y < endYear || (y === endYear && m <= endMonth)) {
-      result.push(`${y}-${String(m).padStart(2, '0')}`);
-      m++;
-      if (m > 12) {
-        m = 1;
-        y++;
-      }
-    }
-    return result;
-  };
+  }, [classId]);
 
   // 获取考勤统计数据
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!startDate || !endDate) {
       alert('请选择开始和结束日期');
       return;
@@ -122,7 +122,7 @@ export default function QueryPage({ params }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [classId, startDate, endDate]);
 
   const handleQuery = () => {
     fetchData();
@@ -135,11 +135,21 @@ export default function QueryPage({ params }) {
 
   // 解决当清除完日期后需要自动拉取数据
   useEffect(() => {
-    if (classId) {
-      fetchClassDetails();
-      fetchData();
-    }
-  }, [classId, startDate, endDate]);
+    if (!classId) return;
+
+    let isMounted = true;
+    const initialize = async () => {
+      if (isMounted) {
+        await fetchClassDetails();
+        await fetchData();
+      }
+    };
+    initialize();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [classId, fetchClassDetails, fetchData]);
 
   const goBack = () => {
     router.push(`/class/${classId}`);
@@ -279,6 +289,7 @@ export default function QueryPage({ params }) {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const drawerStyle = useMemo(() => {

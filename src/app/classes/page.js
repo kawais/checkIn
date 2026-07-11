@@ -22,18 +22,36 @@ export default function ClassesPage() {
   const [uploadError, setUploadError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    // 获取教师名称
-    const storedName = localStorage.getItem('teacherName');
-    if (storedName) {
-      setTeacherName(storedName);
+  const fetchClasses = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get('/api/classes');
+      setClassesList(response.data);
+    } catch (error) {
+      console.error('Failed to fetch classes:', error);
+      alert(error.response?.data?.error || '获取班级列表失败，请确认后端服务是否正常');
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    // 检测暗黑模式
-    const darkTheme = document.documentElement.classList.contains('dark');
-    setIsDark(darkTheme);
+  useEffect(() => {
+    const initialize = () => {
+      // 获取教师名称
+      const storedName = localStorage.getItem('teacherName');
+      if (storedName) {
+        setTeacherName(storedName);
+      }
 
-    fetchClasses();
+      // 检测暗黑模式
+      const darkTheme = document.documentElement.classList.contains('dark');
+      setIsDark(darkTheme);
+
+      fetchClasses();
+    };
+
+    const timer = setTimeout(initialize, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const toggleTheme = () => {
@@ -45,19 +63,6 @@ export default function ClassesPage() {
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
-    }
-  };
-
-  const fetchClasses = async () => {
-    setIsLoading(true);
-    try {
-      const response = await api.get('/api/classes');
-      setClassesList(response.data);
-    } catch (error) {
-      console.error('Failed to fetch classes:', error);
-      alert(error.response?.data?.error || '获取班级列表失败，请确认后端服务是否正常');
-    } finally {
-      setIsLoading(false);
     }
   };
 

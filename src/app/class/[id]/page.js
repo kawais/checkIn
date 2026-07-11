@@ -1,9 +1,25 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/utils/api';
 import './classhome.css';
+
+const getTodayDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getDefaultClearDate = () => {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 6);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}-01`;
+};
 
 export default function ClassHomePage({ params }) {
   const router = useRouter();
@@ -21,38 +37,7 @@ export default function ClassHomePage({ params }) {
   const [clearStatus, setClearStatus] = useState('idle'); // 'idle' | 'success' | 'error'
   const [clearErrorMessage, setClearErrorMessage] = useState('');
 
-  const getTodayDateString = () => {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const getDefaultClearDate = () => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 6);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}-01`;
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        await Promise.all([fetchClassDetails(), checkTodayStatus()]);
-      } catch (error) {
-        console.error('获取班级数据失败:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [classId]);
-
-  const fetchClassDetails = async () => {
+  const fetchClassDetails = useCallback(async () => {
     try {
       const res = await api.get(`/api/classes/${classId}`);
       setClassName(res.data.name);
@@ -62,9 +47,9 @@ export default function ClassHomePage({ params }) {
       alert('获取数据失败，请稍后重试');
       router.push('/classes');
     }
-  };
+  }, [classId, router]);
 
-  const checkTodayStatus = async () => {
+  const checkTodayStatus = useCallback(async () => {
     try {
       const today = getTodayDateString();
       const res = await api.get(`/api/attendance/check-status?classId=${classId}&date=${today}`);
@@ -72,7 +57,33 @@ export default function ClassHomePage({ params }) {
     } catch (error) {
       console.error('获取今日签到状态失败:', error);
     }
-  };
+  }, [classId]);
+
+  useEffect(() => {
+    if (!classId) return;
+
+    let isMounted = true;
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        if (isMounted) {
+          await Promise.all([fetchClassDetails(), checkTodayStatus()]);
+        }
+      } catch (error) {
+        console.error('获取班级数据失败:', error);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [classId, fetchClassDetails, checkTodayStatus]);
 
   const goBack = () => {
     router.push('/classes');
