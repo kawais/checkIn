@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, use, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/utils/api';
+import * as XLSX from 'xlsx';
 import './query.css';
 
 // 纯字符串的月份区间计算（规避时区偏移问题）
@@ -131,6 +132,93 @@ export default function QueryPage({ params }) {
   const handleClear = () => {
     setStartDate(getSixMonthsAgoFirstDay());
     setEndDate(getTodayDateString());
+  };
+
+  const handleExportExcel = () => {
+    if (!studentsData || studentsData.length === 0) return;
+
+    // 1. 生成查询时间范围内的所有自然日数组 YYYY-MM-DD
+    const dateList = [];
+    let current = new Date(startDate);
+    const end = new Date(endDate);
+    while (current <= end) {
+      const year = current.getFullYear();
+      const month = String(current.getMonth() + 1).padStart(2, '0');
+      const day = String(current.getDate()).padStart(2, '0');
+      dateList.push(`${year}-${month}-${day}`);
+      current.setDate(current.getDate() + 1);
+    }
+
+    // 2. 找出有开启过签到的日期集合 (只要任意学生在当天有打卡记录就计入)
+    const activeDates = new Set();
+    studentsData.forEach(student => {
+      if (student.records) {
+        student.records.forEach(r => {
+          activeDates.add(r.date);
+        });
+      }
+    });
+
+    // 3. 统计每个学生在开启过签到日期里的已签到天数和未签到天数
+    // 签到天数直接取 student.totalCount
+    // 未签到天数 = 开启过签到的日期中 status 为 false 或无记录的天数
+    const getAbsentCount = (student) => {
+      let count = 0;
+      activeDates.forEach(dateStr => {
+        const record = student.records ? student.records.find(r => r.date === dateStr) : null;
+        if (!record || !record.status) {
+          count++;
+        }
+      });
+      return count;
+    };
+
+    // 4. 构建数据矩阵 AOA (Array of Arrays)
+    const headerRow = ['', ...studentsData.map(s => s.name)];
+    const presentRow = ['签到天数', ...studentsData.map(s => s.totalCount || 0)];
+    const absentRow = ['未签到天数', ...studentsData.map(s => getAbsentCount(s))];
+
+    const dailyRows = dateList.map(dateStr => {
+      // 转换日期格式为 M月D日，例如 "2026-07-11" -> "7月11日"
+      const parts = dateStr.split('-');
+      const month = parseInt(parts[1], 10);
+      const day = parseInt(parts[2], 10);
+      const formattedDate = `${month}月${day}日`;
+
+      // 获取每一列学生的打卡表现
+      const studentStatusList = studentsData.map(student => {
+        // 如果这天根本没开启签到，直接返回空字符串保持空白
+        if (!activeDates.has(dateStr)) {
+          return '';
+        }
+
+        const record = student.records ? student.records.find(r => r.date === dateStr) : null;
+        if (record) {
+          const symbol = record.status ? '✓' : '✗';
+          return record.remark ? `${symbol} ${record.remark}` : symbol;
+        } else {
+          // 若当天有开启签到，但该学生无记录，视作未打卡/未签到
+          return '✗';
+        }
+      });
+
+      return [formattedDate, ...studentStatusList];
+    });
+
+    const aoa = [headerRow, presentRow, absentRow, ...dailyRows];
+
+    // 5. 使用 xlsx 生成并保存 Excel
+    const worksheet = XLSX.utils.aoa_to_sheet(aoa);
+
+    // 设置列宽，以防文本过长截断 (第一列较宽显示日期，其余列等宽)
+    const colWidths = [{ wch: 15 }, ...studentsData.map(() => ({ wch: 15 }))];
+    worksheet['!cols'] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '考勤报表');
+
+    const fileName = `${className}_考勤报表_${startDate}_至_${endDate}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
   };
 
   // 解决当清除完日期后需要自动拉取数据
@@ -365,45 +453,58 @@ export default function QueryPage({ params }) {
                 <p>暂无符合条件的考勤记录</p>
               </div>
             ) : (
-              <div className="table-container">
-                <table className="report-table">
-                  <thead>
-                    <tr>
-                      <th className="col-seq">序号</th>
-                      <th className="col-name">学生</th>
-                      {months.map(month => (
-                        <th key={month} className="col-month">
-                          {formatMonthHeader(month)}
-                        </th>
-                      ))}
-                      <th className="col-total">累计天数</th>
-                      <th className="col-action">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {studentsData.map((student, index) => (
-                      <tr key={student.id}>
-                        <td className="col-seq">{studentSeqMap[student.id] || index + 1}</td>
-                        <td className="col-name font-semibold">{student.name}</td>
+              <>
+                <div className="report-header">
+                  <span className="report-header-title">考勤数据报表</span>
+                  <button className="btn-export" onClick={handleExportExcel}>
+                    <svg className="export-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>导出 Excel</span>
+                  </button>
+                </div>
+                <div className="table-container">
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th className="col-seq">序号</th>
+                        <th className="col-name">学生</th>
                         {months.map(month => (
-                          <td key={month} className="col-month">
-                            <span className="attendance-count">
-                              {student.monthlyCounts[month] || 0}
-                              <span className="unit">天</span>
-                            </span>
-                          </td>
+                          <th key={month} className="col-month">
+                            {formatMonthHeader(month)}
+                          </th>
                         ))}
-                        <td className="col-total font-semibold">
-                          <span className="total-badge">{student.totalCount || 0}天</span>
-                        </td>
-                        <td className="col-action">
-                          <button className="action-link-btn" onClick={() => showDetail(student)}>详情</button>
-                        </td>
+                        <th className="col-total">累计天数</th>
+                        <th className="col-action">操作</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {studentsData.map((student, index) => (
+                        <tr key={student.id}>
+                          <td className="col-seq">{studentSeqMap[student.id] || index + 1}</td>
+                          <td className="col-name font-semibold">{student.name}</td>
+                          {months.map(month => (
+                            <td key={month} className="col-month">
+                              <span className="attendance-count">
+                                {student.monthlyCounts[month] || 0}
+                                <span className="unit">天</span>
+                              </span>
+                            </td>
+                          ))}
+                          <td className="col-total font-semibold">
+                            <span className="total-badge">{student.totalCount || 0}天</span>
+                          </td>
+                          <td className="col-action">
+                            <button className="action-link-btn" onClick={() => showDetail(student)}>详情</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         )}
