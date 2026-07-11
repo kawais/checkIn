@@ -47,6 +47,15 @@ export async function onRequest({ request, env }) {
   if (request.method === 'POST') {
     try {
       const formData = await request.formData();
+
+      const listResult = await kv.list(env, { prefix: 'class:' + user.id + ':' });
+      const keys = Array.isArray(listResult?.keys) ? listResult.keys : [];
+      if (keys.length >= 2) {
+        return new Response(JSON.stringify({ error: '每个账号最多只能创建 2 个班级' }), {
+          status: 400,
+          headers: { 'content-type': 'application/json; charset=UTF-8' }
+        });
+      }
       const className = formData.get('name');
       const file = formData.get('file');
 
