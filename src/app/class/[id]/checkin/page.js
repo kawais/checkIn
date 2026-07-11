@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, use } from 'react';
+import { useState, useEffect, useMemo, use, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/utils/api';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -18,6 +18,12 @@ export default function CheckInPage({ params }) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
 
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [tempRemark, setTempRemark] = useState('');
+  const longPressTimerRef = useRef(null);
+  const isLongPressActiveRef = useRef(false);
+  const pressingStudentIdRef = useRef(null);
+
   const getTodayDateString = () => {
     const d = new Date();
     const year = d.getFullYear();
@@ -28,11 +34,7 @@ export default function CheckInPage({ params }) {
 
   const [checkInDate, setCheckInDate] = useState(getTodayDateString());
 
-  useEffect(() => {
-    fetchClassData();
-  }, [classId]);
-
-  const fetchClassData = async () => {
+  const fetchClassData = useCallback(async () => {
     try {
       const res = await api.get(`/api/classes/${classId}`);
       setClassName(res.data.name);
@@ -44,7 +46,8 @@ export default function CheckInPage({ params }) {
         studentId: student.id,
         name: student.name,
         seqNum: student.seqNum,
-        status: false
+        status: false,
+        remark: ''
       }));
       setAttendanceRecords(initialRecords);
     } catch (error) {
@@ -54,7 +57,12 @@ export default function CheckInPage({ params }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [classId, router]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchClassData();
+  }, [classId, fetchClassData]);
 
   // 全选
   const handleSelectAll = () => {
@@ -73,6 +81,45 @@ export default function CheckInPage({ params }) {
     );
   };
 
+  const handleTouchStart = (studentId) => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+    isLongPressActiveRef.current = false;
+    pressingStudentIdRef.current = studentId;
+
+    const el = document.getElementById(`student-card-${studentId}`);
+    if (el) el.classList.add('pressing');
+
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressActiveRef.current = true;
+      if (el) el.classList.remove('pressing');
+      
+      const record = attendanceRecords.find(r => r.studentId === studentId);
+      if (record) {
+        setEditingRecord(record);
+        setTempRemark(record.remark || '');
+      }
+    }, 2000);
+  };
+
+  const handleTouchEnd = (studentId) => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    const el = document.getElementById(`student-card-${studentId}`);
+    if (el) el.classList.remove('pressing');
+  };
+
+  const handleCardClick = (studentId) => {
+    if (isLongPressActiveRef.current) {
+      isLongPressActiveRef.current = false;
+      return;
+    }
+    toggleStudentStatus(studentId);
+  };
+
   // 汇总统计数
   const stats = useMemo(() => {
     const total = students.length;
@@ -89,7 +136,8 @@ export default function CheckInPage({ params }) {
         date: checkInDate,
         attendance: attendanceRecords.map(r => ({
           studentId: r.studentId,
-          status: r.status
+          status: r.status,
+          remark: r.remark || ''
         }))
       };
 
@@ -150,9 +198,15 @@ export default function CheckInPage({ params }) {
               <div className="student-grid">
                 {attendanceRecords.map((record) => (
                   <div
+                    id={`student-card-${record.studentId}`}
                     key={record.studentId}
                     className={`student-btn-card ${record.status ? 'present' : ''}`}
-                    onClick={() => toggleStudentStatus(record.studentId)}
+                    onClick={() => handleCardClick(record.studentId)}
+                    onMouseDown={() => handleTouchStart(record.studentId)}
+                    onMouseUp={() => handleTouchEnd(record.studentId)}
+                    onMouseLeave={() => handleTouchEnd(record.studentId)}
+                    onTouchStart={() => handleTouchStart(record.studentId)}
+                    onTouchEnd={() => handleTouchEnd(record.studentId)}
                   >
                     <span className="student-seq">{record.seqNum}</span>
                     <span className="student-name">{record.name}</span>
