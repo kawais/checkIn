@@ -132,6 +132,7 @@ export default function QueryPage({ params }) {
   const handleClear = () => {
     setStartDate(getSixMonthsAgoFirstDay());
     setEndDate(getTodayDateString());
+    setStudentsData([]);
   };
 
   const handleExportExcel = () => {
@@ -221,23 +222,11 @@ export default function QueryPage({ params }) {
     XLSX.writeFile(workbook, fileName);
   };
 
-  // 解决当清除完日期后需要自动拉取数据
+  // 组件挂载时仅获取班级详情，不进行自动查询
   useEffect(() => {
     if (!classId) return;
-
-    let isMounted = true;
-    const initialize = async () => {
-      if (isMounted) {
-        await fetchClassDetails();
-        await fetchData();
-      }
-    };
-    initialize();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [classId, fetchClassDetails, fetchData]);
+    fetchClassDetails();
+  }, [classId, fetchClassDetails]);
 
   const goBack = () => {
     router.push(`/class/${classId}`);
