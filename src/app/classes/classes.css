@@ -527,3 +527,19 @@ html.dark .file-upload-area {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* 禁用创建按钮样式 */
+.add-btn:disabled,
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+  background: var(--text-secondary);
+}
+
+/* 上限红色警告角标 */
+.count-badge.limit-reached {
+  color: #FF3B30;
+  background: rgba(255, 59, 48, 0.1);
+}
